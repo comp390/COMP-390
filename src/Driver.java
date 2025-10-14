@@ -1,58 +1,85 @@
 public class Driver {
 
-    private String dID;
-    private String Name;
-    private String Phone;
-    private String License;
+    private int driverID;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
+    private String license;
     private String dob;
-    private String address;
-    private String dCarID;
-    private int dHistoryID;
+    private String streetAddress;
+    private String city;
+    private String state;
+    private String country;
+    private String zipCode;
 
     // Constructor
-    public Driver(String dName,
+    public Driver(String dFirstName,
+                  String dLastName,
+                  String dEmail,
                   String dPhone,
                   String dLicense,
-                  String dob,
-                  String address,
-                  String dCar,
-                  int dHistoryID){
+                  String dDOB,
+                  String dStreetAddress,
+                  String dCity,
+                  String dState,
+                  String dCounty,
+                  String dZipCode){
 
-        this.Name = dName;
-        this.Phone = dPhone;
-        this.License = dLicense;
-        this.dob = dob;
-        this.address = address;
-        this.dCarID = dCar;
-        this.dHistoryID = dHistoryID;
+        this.firstName = dFirstName;
+        this.lastName = dLastName;
+        this.email = dEmail;
+        this.phone = dPhone;
+        this.license = dLicense;
+        this.dob = dDOB;
+        this.streetAddress = dStreetAddress;
+        this.city = dCity;
+        this.state = dState;
+        this.country = dCounty;
+        this.zipCode = dZipCode;
     }
 
     // Getters
-    public String getdName(){
-        return Name;
+    public int getdId(){
+        return driverID;
+    }
+    public String getdFirstName(){
+        return firstName;
+    }
+    public String getdLastName(){
+        return lastName;
+    }
+    public String getdEmail(){
+        return email;
     }
     public String getdPhone(){
-        return Phone;
+        return phone;
     }
     public String getdLicense(){
-        return License;
+        return license;
     }
     public String getDob(){
         return dob;
     }
-    public String getdAddress(){
-        return address;
+    public String getdStreetAddress(){
+        return streetAddress;
     }
-    public String getdCarID(){
-        return dCarID;
+    public String getdCity(){
+        return city;
     }
-    public String getdID(){
-        return dID;
+    public String getdState(){
+        return state;
     }
-    public int getdHistoryID(){
-        return dHistoryID;
+    public String getdCountry(){
+        return country;
     }
-    public void setdID(String d){
-        this.dID = d;
+    public String getdZipCode(){
+        return zipCode;
     }
+
+    //Setters
+    public void setdId(int driverID){
+        this.driverID = driverID;
+    }
+
 }

@@ -1,11 +1,17 @@
+import java.sql.*;
+// establishes connection to database for DAOSQLite classes
 public class DatabaseManager {
-    private final HistoryDAO hDAO;
-
-    // DatabaseManager Constructor
-    // TODO need the others DAOs
-    public DatabaseManager(HistoryDAO h_dao){
-        this.hDAO = h_dao;
-
+    // open or create file rideshare.db
+    private static final String URL = "jdbc:sqlite:rideshare.db";
+    public static Connection get() throws SQLException {
+        // Start connection
+        Connection c = DriverManager.getConnection(URL);
+        // Command needed for foregin keys, SQLite doesn't enforce them automatically
+        try (Statement s = c.createStatement()) {
+            s.execute("PRAGMA foreign_keys = ON");
+        }
+        // return connection for other classes to use
+        return c;
     }
 
 }
