@@ -46,9 +46,7 @@ class DriverDAOSQLite implements DriverDAO{
     @Override
     public Optional<Driver> findById(int driverID) throws Exception {
         // SQL query statement for easy usage and maintenance
-        String SELECT_DRIVER_BY_ID_SQL = "SELECT driver_id, first_name, last_name, email, " +
-            "phone_no, license_no, dob, street_address, city, state, country, zip_code" +
-            "FROM driver WHERE driver_id = ?";
+        String SELECT_DRIVER_BY_ID_SQL = "SELECT * FROM driver WHERE driver_id = ?";
         try(Connection c = DatabaseManager.get();
             PreparedStatement ps = c.prepareStatement(SELECT_DRIVER_BY_ID_SQL)) {
             // Placeholder ? replaced by actual ID
@@ -80,9 +78,7 @@ class DriverDAOSQLite implements DriverDAO{
     @Override
     public List<Driver> findAll() throws Exception {
         // SQL query statement for easy usage and maintenance
-        String SELECT_ALL_DRIVERS_SQL = "SELECT driver_id, first_name, last_name, email, " +
-            "phone_no, license_no, dob, street_address, city, state, country, zip_code" +
-            "FROM driver ORDER BY driver_id";
+        String SELECT_ALL_DRIVERS_SQL = "SELECT * FROM driver ORDER BY driver_id";
         try(Connection c = DatabaseManager.get();
             PreparedStatement ps = c.prepareStatement(SELECT_ALL_DRIVERS_SQL);
             ResultSet rs = ps.executeQuery()) {

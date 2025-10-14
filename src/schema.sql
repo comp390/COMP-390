@@ -58,7 +58,7 @@ CREATE TABLE payment (
     pay_method TEXT NOT NULL CHECK (pay_method IN('card', 'apple_pay', 'google_pay')),
     amount REAL NOT NULL,
     status TEXT NOT NULL
-        CHECK (status IN ('requested', 'accepted', 'enroute', 'completed', 'canceled')),
+        CHECK (status IN ('processing', 'completed', 'failed', 'refunded')),
     processed_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (trip_id) REFERENCES history(trip_id)
 );
