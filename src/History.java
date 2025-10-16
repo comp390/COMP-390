@@ -1,108 +1,71 @@
 
 public class History {
-    private String driverID;
-    private String riderID;
-    private String paymentID;
-    private String carID;
-    private  int historyID;
+    private int tripID;
+    private int riderID;
+    private int carID;
+    private String requestedAt;
+    private String pickupLoc;
+    private String dropoffLoc;
+    private Double fare;
+    private String status;
 
-
-    /**
-     * Constructor for the class
-     * @param driverID
-     * @param riderID
-     * @param paymentID
-     */
-    public History(String driverID, String riderID, String carID, String paymentID) {
-        this.driverID = driverID;
+    // Constructor
+    public History(Integer riderID, Integer carID, String requestedAt,
+                   String pickupLoc, String dropoffLoc, Double fare, String status) {
         this.riderID = riderID;
         this.carID = carID;
-        this.paymentID = paymentID;
-//        this.historyID = createHistoryID(driverID, riderID, carID, paymentID);
+        this.requestedAt = requestedAt;
+        this.pickupLoc = pickupLoc;
+        this.dropoffLoc = dropoffLoc;
+        this.fare = fare;
+        this.status = status;
     }
 
-    public History(int hID, String driverID, String riderID, String carID, String paymentID) {
-        this.driverID = driverID;
-        this.riderID = riderID;
-        this.carID = carID;
-        this.paymentID = paymentID;
-        this.historyID = hID;
+    // getters
+    public int getHistoryID() {
+        return tripID;
     }
-
-    public String getDriverID() {
-        return driverID;
-    }
-    public String getRiderID() {
+    public int getRiderID() {
         return riderID;
     }
-    public int getHistoryID() {
-        return historyID;
-    }
-    public String getCarID(){
+    public int getCarID() {
         return carID;
     }
-    public String getPaymentID() {
-        return paymentID;
+    public String getRequestedAt() {
+        return requestedAt;
     }
+    public String getPickupLoc() { return pickupLoc; }
+    public String getDropoffLoc() { return dropoffLoc; }
+    public Double getFare() { return fare; }
+    public String getStatus() { return status; }
 
     // Needs validation
-    public void setDriverID(String driverID) {
-        this.driverID = driverID;
-    }
-
-    // Needs validation
-    public void setRiderID(String riderID) {
+    public void setRiderID(Integer driverID) {
         this.riderID = riderID;
     }
 
     // Needs validation
-    public void setPaymentID(String paymentID) {
-        this.paymentID = paymentID;
-    }
-
-    public void setHistoryID(int id){
-        this.historyID = id;
-    }
-    public void setCarID(String carID){
+    public void setCarID(Integer carID) {
         this.carID = carID;
     }
+
+    public void setHistoryID(int id) { this.tripID = tripID; }
 
     // check Rider id is not empty
     private String validateRiderID(String rID) {
         //TODO check length is correct
-        if (rID == null || rID.trim().isEmpty()){
-            throw new IllegalArgumentException("Invalid driverID: "+ rID);
+        if (rID == null || rID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid riderID: " + rID);
         }
         return rID;
     }
 
-    // check driver id is not empty
-    private String validateDriverID(String dID) {
+    // check car id is not empty
+    private String validateCarID(String cID) {
         //TODO check length is correct
-        if (dID == null || dID.trim().isEmpty()){
-            throw new IllegalArgumentException("Invalid driverID: "+ dID);
+        if (cID == null || cID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid carID: " + cID);
         }
-        return dID;
+        return cID;
     }
-
-    // check driver id is not empty
-    private String validatePaymentID(String payID) {
-        //TODO check length is correct
-        if (payID == null || payID.trim().isEmpty()){
-            throw new IllegalArgumentException("Invalid driverID: "+ payID);
-        }
-        return payID;
-    }
-
-//    /**
-//     * Create an ID based on the attribute of the object
-//     * @param dID The Driver ID
-//     * @param rID The Rider ID
-//     * @param pID The Payment ID
-//     * @return An Integer of unique numbers
-//     */
-//    private int createHistoryID(String dID, String rID, String cID, String pID){
-//        String addedStr = dID + rID + cID + pID;
-//        return addedStr.chars().sum();
-//    }
 }
