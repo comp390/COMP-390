@@ -22,9 +22,9 @@ public class Main {
                 }
             }
 
-            System.out.println("✅ Schema loaded successfully!");
+            System.out.println("Schema loaded successfully!");
         } catch (Exception e) {
-            System.out.println("⚠️ Error loading schema: " + e.getMessage());
+            System.out.println("Error loading schema: " + e.getMessage());
         }
 
 
