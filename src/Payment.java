@@ -1,56 +1,99 @@
+
+
 public class Payment {
-    public int paymentId;
-    public int tripId;
-    public String paymentMethod;
-    public Double amount;
-    public String status;
-    public String processedAt;
+    private int paymentID;
+    private int tripID;
+    private String paymentMethod;
+    private double amountPaid;
+    private String status;
+    private String paymentDate;
 
-    // Empty Constructor
-    public Payment(){}
 
-    // Constructor
-    public Payment(Integer paymentId, Integer tripId, String paymentMethod,
-                   Double amount, String status, String processedAt){
-        this.paymentId = paymentId;
-        this.tripId = tripId;
-        this.paymentMethod = paymentMethod;
-        this.amount = amount;
+    /**
+     * This is the constructor for this class
+     * @param Paid Integer, representing the amount paid by the client
+     * @param pMethod String, Method of payment (e.g., credit card  )
+     * @param pID   Integer, The database key value tracker
+     * @param pDate String, The time stamp for when payment is processed
+     */
+    public Payment(int pID, String pMethod, double Paid, String status, String pDate){
+        this.paymentID = pID;
+        this.paymentMethod = pMethod;
+        this.amountPaid = Paid;
         this.status = status;
-        this.processedAt = processedAt;
+        this.paymentDate = pDate;
+    }
+    public double getAmountPaid(){
+        return amountPaid;
+    }
+    public String getPaymentMethod(){
+        return paymentMethod;
+    }
+    public int getPaymentID(){
+        return paymentID;
+    }
+    public String getPaymentDate(){
+        return paymentDate;
+    }
+    public int getTripID(){
+        return tripID;
+    }
+    public String getStatus(){
+        return status;
     }
 
-    // Getters
-    public int getPaymentId() { return paymentId; }
-    public int getTripId() { return tripId; }
-    public String getPaymentMethod() {return paymentMethod; }
-    public Double getAmount() { return amount; }
-    public String getStatus() { return status; }
-    public String getProcessedAt() { return processedAt; }
-
-    // Setters
-
-    public void setPaymentId(int paymentId) {
-        this.paymentId = paymentId;
+    public void setStatus(String status){
+        this.status = status;
     }
 
-    public void setTripId(int tripId) {
-        this.tripId = tripId;
+    public void setPaymentID(int paymentID) {
+        this.paymentID = paymentID;
+    }
+
+    public void setTripID(int tripID) {
+        this.tripID = tripID;
+    }
+
+    public void setAmountPaid(double amountPaid) {
+        this.amountPaid = amountPaid;
     }
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
 
-    public void setAmount(Double amount) {
-        this.amount = amount;
+    public void setPaymentDate(String paymentDate) {
+        this.paymentDate = paymentDate;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public void processPayment(){
 
-    public void setProcessedAt(String processedAt) {
-        this.processedAt = processedAt;
+    }
+    public void verifyPayment(){
+
+    }
+    public int refundPayment(int amountPaid){
+        return 0;
+    }
+    public String generateReceipt(){
+        double tax = amountPaid * 0.625;
+        double withTax = amountPaid + tax;
+
+        return  String.format("""
+            ID: %d
+            
+            Trip Fare---------------------$%.2f
+            Tax---------------------------$%.2f
+            Total-------------------------$%.2f
+            
+            Payment Method:
+            %s
+            %s
+            """, tripID,
+                amountPaid,
+                tax,
+                withTax,
+                paymentMethod.toUpperCase(),
+                paymentDate);
     }
 }
