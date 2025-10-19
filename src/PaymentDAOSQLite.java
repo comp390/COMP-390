@@ -49,7 +49,7 @@ public class PaymentDAOSQLite implements PaymentDAO {
                 Payment p = new Payment(
                   rs.getInt("payment_id"),
                   rs.getString("pay_method"),
-                  rs.getDouble("amount"),
+                  rs.getInt("amount"),
                   rs.getString("status"),
                   rs.getString("processed_at")
                 );
@@ -81,7 +81,7 @@ public class PaymentDAOSQLite implements PaymentDAO {
                     Payment p = new Payment(
                         r.getInt("payment_id"),
                         r.getString("pay_method"),
-                        r.getDouble("amount"),
+                        r.getInt("amount"),
                         r.getString("status"),
                         r.getString("processed_at")
                     );
@@ -93,9 +93,20 @@ public class PaymentDAOSQLite implements PaymentDAO {
     }
 
     @Override
-    public int update(Payment p){
-       return 0;
+    public int update(Payment p) throws Exception{
+
+    String UPDATE_PAYMENT_SQL = "UPDATE payment SET pay_method = ?, amount = ?, " +
+            "status = ?, processed_at = ? WHERE payment_id = ?";
+    try (Connection cnt = DatabaseManager.get();
+    PreparedStatement ps = cnt.prepareStatement(UPDATE_PAYMENT_SQL)){
+        ps.setString(1,p.getPaymentMethod());
+        ps.setInt(2, p.getAmountPaid());
+        ps.setString(3, p.getStatus());
+        ps.setString(4,p.getPaymentDate());
+        ps.setInt(5, p.getPaymentID());
+        return ps.executeUpdate();
     }
+}
 
     /**
      * Deletes a payment record from the database based on the payment ID.
@@ -114,6 +125,4 @@ public class PaymentDAOSQLite implements PaymentDAO {
             return ps.executeUpdate();
         }
     }
-
-
 }

@@ -4,9 +4,11 @@ public class Payment {
     private int paymentID;
     private int tripID;
     private String paymentMethod;
-    private double amountPaid;
+    // Should it money be float od double?
+    private int amountPaid;
     private String status;
     private String paymentDate;
+
 
 
     /**
@@ -16,14 +18,14 @@ public class Payment {
      * @param pID   Integer, The database key value tracker
      * @param pDate String, The time stamp for when payment is processed
      */
-    public Payment(int pID, String pMethod, double Paid, String status, String pDate){
+    public Payment(int pID, String pMethod, int Paid, String status, String pDate){
         this.paymentID = pID;
         this.paymentMethod = pMethod;
         this.amountPaid = Paid;
         this.status = status;
         this.paymentDate = pDate;
     }
-    public double getAmountPaid(){
+    public int getAmountPaid(){
         return amountPaid;
     }
     public String getPaymentMethod(){
@@ -54,7 +56,7 @@ public class Payment {
         this.tripID = tripID;
     }
 
-    public void setAmountPaid(double amountPaid) {
+    public void setAmountPaid(int amountPaid) {
         this.amountPaid = amountPaid;
     }
 
@@ -76,6 +78,7 @@ public class Payment {
         return 0;
     }
     public String generateReceipt(){
+        double fare = (double) amountPaid;
         double tax = amountPaid * 0.625;
         double withTax = amountPaid + tax;
 
@@ -90,7 +93,7 @@ public class Payment {
             %s
             %s
             """, tripID,
-                amountPaid,
+                fare,
                 tax,
                 withTax,
                 paymentMethod.toUpperCase(),
