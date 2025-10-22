@@ -5,11 +5,13 @@ public class Payment {
     private int tripID;
     private String paymentMethod;
     // Should it money be float od double?
-    private int amountPaid;
+    // ^ agree should be a double
+    private double amountPaid;
     private String status;
     private String paymentDate;
 
-
+    // Empty Constructor
+    public Payment() {}
 
     /**
      * This is the constructor for this class
@@ -18,14 +20,14 @@ public class Payment {
      * @param pID   Integer, The database key value tracker
      * @param pDate String, The time stamp for when payment is processed
      */
-    public Payment(int pID, String pMethod, int Paid, String status, String pDate){
+    public Payment(int pID, String pMethod, double Paid, String status, String pDate){
         this.paymentID = pID;
         this.paymentMethod = pMethod;
         this.amountPaid = Paid;
         this.status = status;
         this.paymentDate = pDate;
     }
-    public int getAmountPaid(){
+    public Double getAmountPaid(){
         return amountPaid;
     }
     public String getPaymentMethod(){
@@ -56,7 +58,7 @@ public class Payment {
         this.tripID = tripID;
     }
 
-    public void setAmountPaid(int amountPaid) {
+    public void setAmountPaid(Double amountPaid) {
         this.amountPaid = amountPaid;
     }
 
@@ -74,12 +76,12 @@ public class Payment {
     public void verifyPayment(){
 
     }
-    public int refundPayment(int amountPaid){
+    public int refundPayment(Double amountPaid){
         return 0;
     }
     public String generateReceipt(){
-        double fare = (double) amountPaid;
-        double tax = amountPaid * 0.625;
+        double fare = amountPaid;
+        double tax = amountPaid * 0.0625;
         double withTax = amountPaid + tax;
 
         return  String.format("""
