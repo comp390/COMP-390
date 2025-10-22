@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS history (
 CREATE TABLE IF NOT EXISTS payment (
     payment_id INTEGER PRIMARY KEY AUTOINCREMENT,
     trip_id INTEGER NOT NULL,
-    pay_method TEXT NOT NULL CHECK (pay_method IN('card', 'apple_pay', 'google_pay')),
+    pay_method TEXT NOT NULL CHECK (pay_method IN('card', 'apple pay', 'google pay')),
     amount REAL NOT NULL,
     status TEXT NOT NULL
         CHECK (status IN ('processing', 'completed', 'failed', 'refunded')),

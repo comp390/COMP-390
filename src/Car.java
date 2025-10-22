@@ -37,51 +37,39 @@ public class Car {
 
     //Getters
     public Driver getDriver() {
-        System.out.println("Driver: " + driver);
         return driver;
     }
     public int getCarId() {
-        System.out.println("Car ID: " + carId);
         return carId;
     }
     public int getDriverId() {
-        System.out.println("Driver ID: " + driverId);
         return carId;
     }
     public String getMake() {
-        System.out.println("Make: " + make);
         return make;
     }
     public String getModel() {
-        System.out.println("Model: " + model);
         return model;
     }
     public int getYear() {
-        System.out.println("Year: " + year);
         return year;
     }
     public String getExteriorColor() {
-        System.out.println("Exterior Color: " + exteriorColor);
         return exteriorColor;
     }
     public String getInteriorColor() {
-        System.out.println("Interior Color: " + interiorColor);
         return interiorColor;
     }
     public String getLicensePlate() {
-        System.out.println("License Plate: " + licensePlate);
         return licensePlate;
     }
     public double getPrice() {
-        System.out.println("Price: " + price);
         return price;
     }
     public String getCondition() {
-        System.out.println("Condition: " + condition);
         return condition;
     }
     public boolean isAvailable() {
-        System.out.println("Is Available: " + isAvailable);
         return isAvailable;
     }
 
