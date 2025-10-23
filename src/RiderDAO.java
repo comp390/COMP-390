@@ -10,3 +10,4 @@ public interface RiderDAO {
     int update(Rider d) throws Exception;
     int delete(int riderId) throws Exception;
 }
+

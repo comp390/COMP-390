@@ -24,4 +24,14 @@ public class Rider extends User{
         this.riderID = riderID;
     }
 
+    @Override
+    public String toString() {
+        return "Driver {" +
+                "ID: " + riderID + "\n" +
+                "Name: " + getFirstName() + " " + getLastName()+ "\n" +
+                "Email: " + getEmail() + "\n" +
+                "Phone #: " + getPhone() + "\n" +
+                "Status: " + getStatus();
+    }
+
 }
