@@ -89,8 +89,14 @@ public class Driver extends User {
     @Override
     public String toString() {
         return "Driver {" +
-                "ID: " + driverID +
-                "Name: " + getFirstName() + getLastName();
+                "ID: " + driverID + ", " +
+                "Name: " + getFirstName() + " " + getLastName()+ ", " +
+                "Email: " + getEmail() + ", " +
+                "Phone #: " + getPhone() + ", " +
+                "License #: " + getLicense() + ", " +
+                "DOB: " + getDob() + ", " +
+                "Address: " + getStreetAddress() + " " + getCity() + ", " +
+                getState() + ", " + getZipCode() + " " + getCountry();
     }
 
 }

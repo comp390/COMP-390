@@ -96,6 +96,7 @@ public class TestingHere {
         assertTrue(driver_id > 0);
         d.setId(driver_id);
 
+        System.out.println(d.toString());
         d.setLicense("S67890");
         dao.update(d);
 

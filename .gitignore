@@ -31,3 +31,4 @@ bin/
 
 ### SQLite Database generateed locally ###
 *.db
+rideshare.sqbpro
