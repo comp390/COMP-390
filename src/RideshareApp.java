@@ -4,6 +4,8 @@ import java.awt.event.FocusEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
+import javax.swing.event.*;
+import javax.swing.text.Document;
 
 public class RideshareApp extends JFrame {
 
@@ -32,7 +34,7 @@ public class RideshareApp extends JFrame {
         JPanel histPage = buildHistoryPage();
 
         // add pages to CardLayout with our keys (see GeeksforGeeks tutorial "1", "2" ... cards)
-        //cards.add(loginPage, LOGIN);
+        cards.add(loginPage, LOGIN);
         cards.add(homePage, HOME);
         //cards.add(bookPage, BOOK);
         cards.add(profPage, PROF);
@@ -40,12 +42,111 @@ public class RideshareApp extends JFrame {
 
         setContentPane(cards);
 
-        c1.show(cards, PROF);
+        c1.show(cards, LOGIN);
 
     }
 
     private JPanel buildLoginPage() {
-        return null;
+        JPanel loginPage = new JPanel(new GridBagLayout());
+
+        JPanel p = new JPanel(new BorderLayout(8,10));
+        //loginPage.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        p.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200,200,200)),
+                BorderFactory.createEmptyBorder(14,14,14,14)
+        ));
+        p.setBackground(Color.WHITE);
+        p.setPreferredSize(new Dimension(360, 240));
+        JLabel title = new JLabel("Log in");
+        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
+        title.setHorizontalAlignment(JLabel.CENTER);
+        p.add(title, BorderLayout.NORTH);
+
+        // Constrain the text boxes from being too tall in the PII form
+        JPanel form = new JPanel(new GridBagLayout());
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(8,10,8,10);
+        g.anchor = GridBagConstraints.WEST;
+        g.fill = GridBagConstraints.HORIZONTAL;
+
+        //username
+        JLabel userL = new JLabel("Username");
+        g.gridx = 0; g.gridy = 0; g.weightx =0;
+        form.add(userL, g);
+
+        JTextField userTF = new JTextField(18);
+        textHelper(userTF, "user");
+        g.gridx = 1; g.gridy = 0; g.weightx = 1;
+        form.add(userTF, g);
+
+        //password
+        JLabel passL = new JLabel("Password");
+        g.gridx = 0; g.gridy = 1; g.weightx = 0;
+        form.add(passL, g);
+
+        JPasswordField passPF = new JPasswordField(18);
+        textHelper(passPF, "password");
+        g.gridx = 1; g.gridy = 1; g.weightx = 1;
+        form.add(passPF, g);
+
+        //error display
+        JLabel error = new JLabel(" ");
+        error.setForeground(Color.RED);
+        g.gridx = 0; g.gridy = 2; g.gridwidth = 2; g.weightx=1;
+        form.add(error, g);
+
+        p.add(form, BorderLayout.CENTER);
+
+        // buttons
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton loginButton = new JButton("Log in!");
+        loginButton.setEnabled(false); // Initially disabled
+        buttons.add(loginButton);
+        p.add(buttons, BorderLayout.SOUTH);
+
+        DocumentListener documentListener = new DocumentListener() {
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                printIt(documentEvent);
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                printIt(documentEvent);
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                printIt(documentEvent);
+            }
+            private void printIt(DocumentEvent documentEvent) {
+                Document source = documentEvent.getDocument();
+                int length = source.getLength();
+                loginButton.setEnabled(length != 0);
+            }
+        };
+
+        // enable only when text in both
+        Runnable update = () -> {
+            boolean ok = !userTF.getText().trim().isEmpty()
+                    && passPF.getPassword().length > 0;
+            loginButton.setEnabled(ok);
+        };
+        userTF.getDocument().addDocumentListener(documentListener);
+        passPF.getDocument().addDocumentListener(documentListener);
+
+        loginButton.addActionListener(e -> {
+            if (userTF.getText().equals("user") &&
+                    new String(passPF.getPassword()).equals("password")) {
+                c1.show(cards, HOME);
+            } else {
+                error.setText("Invalid username or password");
+            }
+        });
+
+
+        loginPage.add(p, new GridBagConstraints());
+        return loginPage;
     }
 
     private JPanel buildHomePage() {
@@ -66,18 +167,21 @@ public class RideshareApp extends JFrame {
         summary.add(new JLabel("Something goes here"));
         p.add(summary, BorderLayout.WEST);
 
-        // add bottoms
-        JPanel bottons = new  JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // add buttons
+        JPanel buttons = new  JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton reviewProfile = new JButton("Review Profile");
-        bottons.add(reviewProfile);
+        buttons.add(reviewProfile);
         // add more bottoms here
 
         // change to other cards for demostrations
         JButton showPii = new JButton("Show Profile window");
         showPii.addActionListener(e -> c1.show(cards,PROF));
-        bottons.add(showPii);
+        buttons.add(showPii);
+        JButton logout = new JButton("Log Out");
+        logout.addActionListener(e -> c1.show(cards,LOGIN));
+        buttons.add(logout);
 
-        p.add(bottons, BorderLayout.SOUTH);
+        p.add(buttons, BorderLayout.SOUTH);
 
         return p;
     }
@@ -299,7 +403,7 @@ public class RideshareApp extends JFrame {
         profilePage.add(centerWrapper, BorderLayout.CENTER);
 
 
-        // bottoms
+        // buttons
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(event -> {
             //TODO I need to implement the storing info part
@@ -309,9 +413,9 @@ public class RideshareApp extends JFrame {
         });
 
         // set bottom to the lower-right of the frame
-        JPanel bottonPossition = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottonPossition.add(saveButton);
-        profilePage.add(bottonPossition, BorderLayout.SOUTH);
+        JPanel buttonPosition = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPosition.add(saveButton);
+        profilePage.add(buttonPosition, BorderLayout.SOUTH);
 
         return profilePage;
     }

@@ -1,8 +1,8 @@
 # 🚕 Rideshare App
 ## 📚 Table of Contents
 1. [Phase 1 – System Context & Requirements Analysis](#phase-1--system-context--requirements-analysis)
-2. [Phase 2 – Interaction Modeling (Use Case & Sequence Diagrams)](#phase-2--interaction-modeling)
-3. [Phase 3 – Structural Modeling (Class Diagrams & Data Design)](#phase-3--structural-modeling)
+2. [Phase 2 – Interaction Modeling (Use Case & Sequence Diagrams)](#phase-2--interaction-modeling-Use-Case--Sequence-Diagrams)
+3. [Phase 3 – Structural Modeling (Class Diagrams & Data Design)](#phase-3--structural-modeling-Class-Diagrams--Data-Design)
 4. [Phase 4 – System Architecture & UI Design](#phase-4--system-architecture--ui-design)
 5. [Setup & Installation](#setup--installation)
 6. [Technologies Used](#technologies-used)
@@ -10,7 +10,7 @@
 
 ---
 
-## 🏗️ Phase 1 – System Context & Requirements Analysis
+## Phase 1 – System Context & Requirements Analysis
 
 <summary><b>🔍 Problem Statement</b></summary>
  
@@ -57,7 +57,7 @@
 
 ---
 
-## 🧮 Phase 2 – Interaction Modeling (Use Case & Sequence Diagrams)
+## Phase 2 – Interaction Modeling (Use Case & Sequence Diagrams)
 
 <summary><b>📘 Use Case Diagram</b></summary>
 
@@ -87,7 +87,7 @@
 
 ---
 
-## 🗃️ Phase 3 – Structural Modeling (Class Diagrams & Data Design)
+## Phase 3 – Structural Modeling (Class Diagrams & Data Design)
 
 <summary><b>📊 Class diagram</b></summary>
 
@@ -107,7 +107,7 @@
 
 ---
 
-## 🧩 Phase 4 – System Architecture & UI Design
+## Phase 4 – System Architecture & UI Design
 
 <summary><b>🧭 Architectural Diagram</b></summary>
 
@@ -117,11 +117,13 @@
 - **RiderSharing:** Main front-end of the application that renders the user interface and sends users actions to the Services Layer.  
 - **Rider App:** This is the interface for Riders to request trips, view ETA, track requested driver, manage payments and review trip history.  
 - **Driver App:** This is the interface where the Drivers can accept, request, check Rider destination, manage availability and review earnings.
+- 
 **Configuration Services:**
 - **Profile management:** Responsible for creating, editing and retrieving  the Driver’s and Rider’s profile menu including the storage of this data.
 - **Payment Management:** Responsible for all financial transitions which includes securing payment method, calculating final fares, handling payment processing, managing refunds and generating receipts.
 - **Ride/Trip Management:** Responsible for the entire lifecycle of a ride or trip. From initial request processing, driver accepting request, real-time location tracking, state transitions (eg. from request -> accepted -> in route -> dropped off) and confirmation of final trip destination from rider.
-**Application Services:**
+
+- **Application Services:**
 - **Register Profile:** Handles the creation of a new user (rider or driver). Records essential information such as name, contact info, and credentials.
 - **Register Phone:** Adds or updates the user’s contact info.
 - **Set Current Location:** Handle the geocoding and translating user inputs like addresses into standard geo coordinates.
@@ -132,7 +134,8 @@
 - **Cancel a Ride:** Perform a cancellation of a requested trip and apply any relevant business cancellation fees.
 - **Register Payment Methods:** Responsible for associating payment info to a user profile, as well as, securely tokenize, validate and safely store the info.
 - **Rate Rider/Driver:** Collects post trip feedback and ratings.
-**Utility Services:**
+
+- **Utility Services:**
 - **User & Application Storage:** Responsible for the persistent data and handles the direct interaction with the database.
 - **Data Encryption:** This service is dedicated to securing data in transit (via TLS) and at rest (via SHA-2). Giving special attention to payment info and PII.
 - **MFA (Multi-Factor Auth):** A security utility that integrates with Profile Management to enforce and manage secondary verification factors during logins or requests of sensitive nature.
@@ -148,7 +151,7 @@ Describe the visual layout, navigation flow, and design rationale.
 
 ---
 
-## ⚙️ Setup & Installation
+## Setup & Installation
 
 ### 🖥️ Prerequisites
 Before running the project, make sure you have:
@@ -157,7 +160,7 @@ Before running the project, make sure you have:
 - A compatible **IDE** such as IntelliJ IDEA, Eclipse, or NetBeans  
 - `sqlite-jdbc.jar` added to your project’s `/lib` folder  
 
-### 🧩 Installation Steps
+### Installation Steps
 1. **Clone the repository**
    ```bash
    git clone https://github.com/00ashvar/COMP-390.git
@@ -167,7 +170,7 @@ Before running the project, make sure you have:
 
 ---
 
-## 🧰 Technologies Used
+## Technologies Used
 
 | Category | Tool / Technology | Description |
 |-----------|------------------|-------------|
@@ -178,7 +181,7 @@ Before running the project, make sure you have:
 | **Build & IDE** | IntelliJ IDEA | Development environment used to compile and run the project |
 | **Version Control** | Git & GitHub | Used for version tracking and collaborative documentation |
 
-## 👥 Team & Credits
+## Team & Credits
 
 **Project Authors:**  
 Alexandra Arbia, Lensi Gondaliya, Simao Rebelo, Hamilton Vargas, Esteban Torres  
