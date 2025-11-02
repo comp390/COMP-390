@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 import javax.swing.event.*;
 import javax.swing.text.Document;
+import java.util.List;
 
 public class RideshareApp extends JFrame {
 
@@ -151,39 +152,122 @@ public class RideshareApp extends JFrame {
 
     private JPanel buildHomePage() {
         //JPanel homePanel = new JPanel();
+        JPanel homePanel = new JPanel(new BorderLayout(10, 10));
+        homePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10 ,10));
 
-        JPanel p = new JPanel(new BorderLayout(8,10));
-        p.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-
-        JLabel title = new JLabel("Welcome to Rider Share");
+        JLabel title = new JLabel("Welcome to RideShare!");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
         title.setHorizontalAlignment(JLabel.CENTER);
-        p.add(title, BorderLayout.NORTH);
+        homePanel.add(title, BorderLayout.NORTH);
 
+        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 0));
 
-        // center info (I need to think how to organize this page, but this will do for summition)
-        JPanel summary = new JPanel(new GridLayout(0,1,3,3));
-        summary.add(new JLabel("Something goes here"));
-        summary.add(new JLabel("Something goes here"));
-        p.add(summary, BorderLayout.WEST);
+        JPanel statsPanel = new JPanel(new GridLayout(0, 1, 5, 5));
+        statsPanel.setBorder(BorderFactory.createTitledBorder("Your Account"));
 
-        // add buttons
-        JPanel buttons = new  JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton reviewProfile = new JButton("Review Profile");
-        buttons.add(reviewProfile);
-        // add more bottoms here
+        int totalTrips = 0;
+        double totalSpent = 0.0;
+        String lastRide = "No rides yet";
 
-        // change to other cards for demostrations
-        JButton showPii = new JButton("Show Profile window");
-        showPii.addActionListener(e -> c1.show(cards,PROF));
-        buttons.add(showPii);
-        JButton logout = new JButton("Log Out");
-        logout.addActionListener(e -> c1.show(cards,LOGIN));
-        buttons.add(logout);
+        try {
+            HistoryDAO historyDAO = new HistoryDAOSQLite();
 
-        p.add(buttons, BorderLayout.SOUTH);
+            int currentRiderID = 1;
 
-        return p;
+            List<History> riderHistory = historyDAO.findRiderHistory(currentRiderID);
+            totalTrips = riderHistory.size();
+
+            for (History trip : riderHistory) {
+                if (trip.getFare() != null) {
+                    totalSpent += trip.getFare();
+                }
+            }
+
+            if (!riderHistory.isEmpty()) {
+                History last = riderHistory.get(riderHistory.size() - 1);
+                lastRide = last.getPickupLoc() + " to " + last.getDropoffLoc();
+            }
+
+        } catch (Exception ex) {
+            System.err.println("Error loading statistics: " + ex.getMessage());
+        }
+
+    statsPanel.add(new JLabel("Total Trips: " + totalTrips));
+    statsPanel.add(new JLabel("Total Spent: $" + String.format("%.2f", totalSpent)));
+    statsPanel.add(new JLabel("Last Ride: " + lastRide));
+
+    JPanel tripsPanel = new JPanel(new BorderLayout());
+    tripsPanel.setBorder(BorderFactory.createTitledBorder("Recent Trips"));
+
+    JPanel tripsList = new JPanel();
+    tripsList.setLayout(new BoxLayout(tripsList, BoxLayout.Y_AXIS));
+
+    try {
+        HistoryDAO historyDAO = new HistoryDAOSQLite();
+        int currentRiderID = 1;
+        List<History> riderHistory = historyDAO.findRiderHistory(currentRiderID);
+
+        if (riderHistory.isEmpty()) {
+            tripsList.add(new JLabel("No trips yet"));
+        } else {
+            int displayCount = Math.min(5, riderHistory.size());
+            for (int i = riderHistory.size() -1; i >= riderHistory.size() - displayCount; i--){
+                History trip = riderHistory.get(i);
+                String tripText = String.format("%s -> %s ($%.2f)",
+                        trip.getPickupLoc(), trip.getDropoffLoc(), trip.getFare());
+                tripsList.add(new JLabel(tripText));
+                }
+            }
+        } catch (Exception ex) {
+            tripsList.add(new JLabel("Error loading trips"));
+        }
+
+        JScrollPane scrollPane = new JScrollPane(tripsList);
+        scrollPane.setPreferredSize(new Dimension( 300, 100));
+        tripsPanel.add(scrollPane, BorderLayout.CENTER);
+
+        centerPanel.add(statsPanel);
+        centerPanel.add(tripsPanel);
+        homePanel.add(centerPanel, BorderLayout.CENTER);
+
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton bookRideButton = new JButton("Book a Ride");
+        bookRideButton.addActionListener(e -> {
+            //TODO: Uncomment when booking page is implemented
+            //c1.show(cards, BOOK);
+            JOptionPane.showMessageDialog(this,
+             "Booking page is under construction",
+            "Coming Soon",
+            JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        JButton historyButton = new JButton("View History");
+        historyButton.addActionListener(e -> {
+            //TODO: Uncomment when history page is implemented
+            //c1.show(cards, HIST);
+
+            JOptionPane.showMessageDialog(this, 
+            "History page is under construction",
+            "Coming Soon",
+            JOptionPane.INFORMATION_MESSAGE);
+        });
+
+    JButton profileButton = new JButton("Profile");
+    profileButton.addActionListener(e -> c1.show(cards, PROF));
+
+    JButton logoutButton = new JButton("Log Out");
+    logoutButton.addActionListener(e -> c1.show(cards, LOGIN));
+
+    buttonsPanel.add(bookRideButton);
+    buttonsPanel.add(historyButton);
+    buttonsPanel.add(profileButton);
+    buttonsPanel.add(logoutButton);
+
+    homePanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+    return homePanel;
+    
     }
 
     private JPanel buildBookingPage() {
