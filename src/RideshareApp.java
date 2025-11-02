@@ -49,7 +49,7 @@ public class RideshareApp extends JFrame {
     }
 
     private JPanel buildHomePage() {
-        JPanel homePanel = new JPanel();
+        //JPanel homePanel = new JPanel();
 
         JPanel p = new JPanel(new BorderLayout(8,10));
         p.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
@@ -86,7 +86,24 @@ public class RideshareApp extends JFrame {
         return null;
     }
 
-    // a helper to set text gray & clear on focus, then restore if empty
+
+
+    private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        form.add(new JLabel(labelText), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        form.add(field, gbc);
+
+        return row + 1;
+    }
+
+    // a helper (Profile) to set text gray & clear on focus, then restore if empty
     private void textHelper(JTextField tf, String placeHolder){
         tf.setText(placeHolder);
         tf.setForeground(Color.GRAY);
@@ -108,57 +125,40 @@ public class RideshareApp extends JFrame {
         });
     }
 
-    private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        form.add(new JLabel(labelText), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        form.add(field, gbc);
-
-        return row + 1;
-    }
     /**
      * Builds the main Profile Page panel with nested layouts for perfect alignment.
      */
     JPanel buildProfilePage() {
-
         // needed to count rows in the grid
         int prow = 0;
         int adrow = 0;
 
-        // BorderLayout to help with simetry
+        // Outer Border page to help with simetry
         JPanel profilePage = new JPanel(new BorderLayout(8,8));
         profilePage.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
 
-        // better title
-        JLabel title = new JLabel("<html><h1>Profile</h1></html>");
-        profilePage.add(title, BorderLayout.NORTH);
-
-        // Constrain the text boxes from being too tall
+        // Constrain the text boxes from being too tall in the PII form
         JPanel gridPii = new JPanel(new GridBagLayout());
+        gridPii.setBorder(BorderFactory.createTitledBorder("Personal Information"));
         GridBagConstraints gbc1 = new GridBagConstraints();
         gbc1.insets = new Insets(4,6,4,6);
         gbc1.anchor = GridBagConstraints.WEST;
         gbc1.fill = GridBagConstraints.HORIZONTAL;
 
+        // better title
+        JLabel title = new JLabel("<html><h1>Profile</h1></html>");
+        profilePage.add(title, BorderLayout.NORTH);
+
+
 
         // add labes, text boxes & rows
         // row 0
-        //JLabel nameL = new JLabel("Full Name:");
         JTextField nameT =  new JTextField();
         nameT.setColumns(20);
         textHelper(nameT, "Ride Share");
         prow = addRowHelper(gridPii, gbc1, prow,"Full Name:", nameT);
 
-
-
         // row 1
-        //JLabel emailL = new JLabel("Email:");
         JTextField emailT = new JTextField();
         emailT.setColumns(11);
         textHelper(emailT, "rideshare@bridgew.com");
@@ -166,14 +166,12 @@ public class RideshareApp extends JFrame {
 
 
         // row 2
-        //JLabel phoneL = new JLabel("Phone number:");
         JTextField phoneT = new JTextField();
         phoneT.setColumns(11);
-        textHelper(phoneT, "111-000-1111");
+        textHelper(phoneT, "###-###-####");
         prow = addRowHelper(gridPii, gbc1, prow, "Phone Number:", phoneT);
 
         // row 3
-        //JLabel licenseL = new JLabel("License Plate:");
         JTextField licenseT = new JTextField();
         licenseT.setColumns(11);
         textHelper(licenseT, "ABC-123");
@@ -188,6 +186,7 @@ public class RideshareApp extends JFrame {
 
 
         JPanel gridAddr = new JPanel(new GridBagLayout());
+        gridAddr.setBorder(BorderFactory.createTitledBorder("Address"));
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.insets = new Insets(4,6,4,6);
         gbc2.anchor = GridBagConstraints.WEST;
@@ -227,19 +226,79 @@ public class RideshareApp extends JFrame {
         //JLabel zipL = new JLabel("ZIP Code:");
         JTextField zipT = new JTextField();
         zipT.setColumns(8);
-        textHelper(zipT, "01011");
+        textHelper(zipT, "#####");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "ZIP Code:", zipT);
 
 
 
         // add Panel and addrPanel to center side-by-side
-        JPanel center = new JPanel(new GridLayout(1,2,12,12));
+        JPanel center = new JPanel(new GridLayout(1,2,0,0)); // <===
         center.add(gridPii);
         center.add(gridAddr);
-        profilePage.add(center,BorderLayout.CENTER);
 
-        System.out.println("info grid: " + gridPii.getLayout());
-        System.out.println("addr grid: " + gridAddr.getLayout());
+        // add 1x3 grid below the two forms and above Save bottom
+        JPanel paymentRow = new JPanel(new GridBagLayout());
+        GridBagConstraints payGBC = new GridBagConstraints();
+
+        payGBC.insets = new Insets(2,6,2,6);
+        payGBC.anchor = GridBagConstraints.WEST;
+        payGBC.fill = GridBagConstraints.NONE;
+
+        // Label
+        payGBC.gridx = 0;
+        payGBC.weightx = 0;
+        paymentRow.add(new JLabel("Credit/Debit Card"), payGBC);
+
+        // Text box
+        payGBC.gridx = 1;
+        payGBC.weightx = 0.1;
+        payGBC.fill = GridBagConstraints.HORIZONTAL;
+        JTextField cardNumT = new JTextField(10);
+        textHelper(cardNumT, "**** **** **** ****");
+        paymentRow.add(cardNumT, payGBC);
+
+
+        payGBC.gridx = 2;
+        payGBC.weightx = 0;
+        payGBC.fill = GridBagConstraints.NONE;
+        paymentRow.add(Box.createHorizontalStrut(8), payGBC);
+
+        // Label
+        payGBC.gridx = 3;
+        payGBC.weightx = 0;
+        paymentRow.add(new JLabel("Exp. Date"), payGBC);
+
+        // Text box
+        payGBC.gridx = 4;
+        payGBC.weightx = 0.15;
+        payGBC.fill = GridBagConstraints.HORIZONTAL;
+        JTextField expDateT = new JTextField(6);
+        textHelper(expDateT, "MM-YY");
+        paymentRow.add(expDateT, payGBC);
+
+        // Label
+        payGBC.gridx = 5;
+        payGBC.weightx = 0;
+        payGBC.fill = GridBagConstraints.NONE;
+        paymentRow.add(new JLabel("CVV"), payGBC);
+
+
+        payGBC.gridx = 6;
+        payGBC.weightx = 0.05;
+        payGBC.fill = GridBagConstraints.HORIZONTAL;
+        JTextField cvvNumT = new JTextField(4);
+        textHelper(cvvNumT, "###");
+        paymentRow.add(cvvNumT, payGBC);
+
+        // need wrapper so the grid sit below the forms
+        JPanel centerWrapper = new JPanel();
+        centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
+        centerWrapper.add(center);
+        centerWrapper.add(Box.createRigidArea(new Dimension(0,8)));
+        centerWrapper.add(paymentRow);
+        profilePage.add(centerWrapper, BorderLayout.CENTER);
+
+
         // bottoms
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(event -> {
@@ -255,7 +314,6 @@ public class RideshareApp extends JFrame {
         profilePage.add(bottonPossition, BorderLayout.SOUTH);
 
         return profilePage;
-
     }
 
     private JPanel buildHistoryPage() {
