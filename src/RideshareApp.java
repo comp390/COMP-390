@@ -173,19 +173,19 @@ public class RideshareApp extends JFrame {
         try {
             HistoryDAO historyDAO = new HistoryDAOSQLite();
 
-            int currentRiderID = 1;
+            int currentUserID = 1;
 
-            List<History> riderHistory = historyDAO.findRiderHistory(currentRiderID);
-            totalTrips = riderHistory.size();
+            List<History> userHistory = historyDAO.findUserHistory(currentUserID);
+            totalTrips = userHistory.size();
 
-            for (History trip : riderHistory) {
+            for (History trip : userHistory) {
                 if (trip.getFare() != null) {
                     totalSpent += trip.getFare();
                 }
             }
 
-            if (!riderHistory.isEmpty()) {
-                History last = riderHistory.get(riderHistory.size() - 1);
+            if (!userHistory.isEmpty()) {
+                History last = userHistory.get(userHistory.size() - 1);
                 lastRide = last.getPickupLoc() + " to " + last.getDropoffLoc();
             }
 
@@ -205,15 +205,15 @@ public class RideshareApp extends JFrame {
 
     try {
         HistoryDAO historyDAO = new HistoryDAOSQLite();
-        int currentRiderID = 1;
-        List<History> riderHistory = historyDAO.findRiderHistory(currentRiderID);
+        int currentUserID = 1;
+        List<History> userHistory = historyDAO.findUserHistory(currentUserID);
 
-        if (riderHistory.isEmpty()) {
+        if (userHistory.isEmpty()) {
             tripsList.add(new JLabel("No trips yet"));
         } else {
-            int displayCount = Math.min(5, riderHistory.size());
-            for (int i = riderHistory.size() -1; i >= riderHistory.size() - displayCount; i--){
-                History trip = riderHistory.get(i);
+            int displayCount = Math.min(5, userHistory.size());
+            for (int i = userHistory.size() -1; i >= userHistory.size() - displayCount; i--){
+                History trip = userHistory.get(i);
                 String tripText = String.format("%s -> %s ($%.2f)",
                         trip.getPickupLoc(), trip.getDropoffLoc(), trip.getFare());
                 tripsList.add(new JLabel(tripText));

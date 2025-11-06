@@ -4,45 +4,24 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('rider', 'driver')),
-    rider_id INTEGER UNIQUE,
-    driver_id INTEGER UNIQUE,
-    FOREIGN KEY (rider_id) REFERENCES rider(rider_id) ON DELETE CASCADE,
-    FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE CASCADE,
-    CHECK (
-        (role='rider' AND rider_id IS NOT NULL AND driver_id IS NULL) OR
-        (role='driver' AND driver_id IS NOT NULL AND rider_id IS NULL)
-    )
-);
-
-CREATE TABLE IF NOT EXISTS rider (
-    rider_id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     phone_no TEXT NOT NULL,
-    status TEXT CHECK (status IN ('active', 'inactive'))
-);
-
-CREATE TABLE IF NOT EXISTS driver (
-    driver_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name TEXT NOT NULL,
-    last_name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    phone_no TEXT NOT NULL,
-    license_no TEXT NOT NULL,
+    license_no TEXT,
     dob TEXT,
     street_address TEXT,
     city TEXT,
     state TEXT,
     country TEXT,
     zip_code TEXT,
+    role TEXT NOT NULL CHECK (role IN ('rider', 'driver')),
     status TEXT CHECK (status IN ('active', 'inactive'))
 );
 
 CREATE TABLE IF NOT EXISTS car (
     car_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    driver_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     make TEXT,
     model TEXT,
     year INTEGER,
@@ -52,12 +31,12 @@ CREATE TABLE IF NOT EXISTS car (
     price REAL,
     condition TEXT CHECK (condition IN ('fair', 'good', 'very good', 'excellent')),
     license_plate_no TEXT UNIQUE NOT NULL,
-    FOREIGN KEY (driver_id) REFERENCES driver(driver_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS history (
     trip_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    rider_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     car_id INTEGER NOT NULL,
     requested_at TEXT NOT NULL DEFAULT (datetime('now')),
     pickup_loc TEXT,
@@ -65,7 +44,7 @@ CREATE TABLE IF NOT EXISTS history (
     fare_total REAL,
     status TEXT NOT NULL
         CHECK (status IN ('requested', 'accepted', 'enroute', 'completed', 'canceled')),
-    FOREIGN KEY (rider_id) REFERENCES rider(rider_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (car_id) REFERENCES car(car_id)
 );
 
@@ -77,122 +56,48 @@ CREATE TABLE IF NOT EXISTS payment (
     status TEXT NOT NULL
         CHECK (status IN ('processing', 'completed', 'failed', 'refunded')),
     processed_at TEXT NOT NULL DEFAULT (datetime('now')),
-    FOREIGN KEY (trip_id) REFERENCES history(trip_id)
+    FOREIGN KEY (trip_id) REFERENCES history(trip_id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_driver_cars ON car(driver_id);
-CREATE INDEX IF NOT EXISTS idx_rider_trips ON history(rider_id, requested_at DESC);
+CREATE INDEX IF NOT EXISTS idx_driver_cars ON car(user_id);
+CREATE INDEX IF NOT EXISTS idx_rider_trips ON history(user_id, requested_at DESC);
 CREATE INDEX IF NOT EXISTS idx_trip_payments ON payment(trip_id);
 
-INSERT INTO rider (first_name, last_name, email, phone_no, status) VALUES
-('Sabrina', 'Melton', 'sabrina.melton@example.com', '555-111-0001', 'active'), 
-('Lennon', 'Odom', 'lennon.odom@example.com', '555-101-0002', 'active'), 
-('Laylani', 'Cohen', 'laylani.cohen@example.com', '555-111-0003', 'active'), 
-('Killian', 'Velasquez', 'killian.velasquez@example.com', '555-111-0004', 'active'), 
-('Esme', 'Ross', 'esme.ross@example.com', '555-111-0005', 'active'), 
-('Wesley', 'Cameron', 'wesley.cameron@example.com', '555-111-0006', 'active'), 
-('Julie', 'Roth', 'julie.roth@example.com', '555-111-0007', 'active'), 
-('Roy', 'Arroyo', 'roy.arroyo@example.com', '555-111-0008', 'active'), 
-('Kyra', 'Randolph', 'kyra.randolph@example.com', '555-111-0009', 'active'), 
-('Eugene', 'Poole', 'eugene.poole@example.com', '555-111-0010', 'active'), 
-('Bonnie', 'Roman', 'bonnie.roman@example.com', '555-111-0011', 'active'), 
-('Kian', 'Carlson', 'kian.carlson@example.com', '555-111-0012', 'active'), 
-('Kali', 'Juarez', 'kali.juarez@example.com', '555-111-0013', 'active'), 
-('Joaquin', 'Beard', 'joaquin.beard@example.com', '555-111-0014', 'active'), 
-('Ezra', 'Adkins', 'ezra.adkins@example.com', '555-111-0015', 'active'), 
-('Kylo', 'Bishop', 'kylo.bishop@example.com', '555-111-0016', 'active'), 
-('Brooklynn', 'Maynard', 'brooklynn.maynard@example.com', '555-111-0017', 'active'), 
-('Landry', 'Shepard', 'landry.shepard@example.com', '555-111-0018', 'active'), 
-('Noor', 'Fuller', 'noor.fuller@example.com', '555-111-0019', 'active'), 
-('Andre', 'Woodward', 'andre.woodward@example.com', '555-111-0020', 'active'), 
-('Drew', 'Callahan', 'drew.callahan@example.com', '555-111-0021', 'active'), 
-('Quinton', 'Lucero', 'quinton.lucero@example.com', '555-111-0022', 'active'), 
-('Ila', 'Adams', 'ila.adams@example.com', '555-111-0023', 'active'), 
-('Hudson', 'Stephenson', 'hudson.stephenson@example.com', '555-111-0024', 'active'), 
-('Khaleesi', 'Schroeder', 'khaleesi.schroeder@example.com', '555-111-0025', 'active');
+INSERT INTO users (username, password, first_name, last_name, email, phone_no, license_no, dob,
+    street_address, city, state, country, zip_code, role, status) VALUES
+('izaiah.w', 'password', 'Izaiah', 'Wall', 'izaiah.wall@example.com', '555-222-0001', 'MA0001', '2000-02-11', '1 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('jayda.c', 'password', 'Jayda', 'Carpenter', 'jayda.carpenter@example.com', '555-222-0002', 'MA0002', '1990-05-21', '2 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('jeremy.c', 'password', 'Jeremy', 'Conner', 'jeremy.conner@example.com', '555-222-0003', 'MA0003', '1994-03-09', '3 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('alondra.f', 'password', 'Alondra', 'Fitzgerald', 'alondra.fitzgerald@example.com', '555-222-0004', 'MA0004', '1993-01-18', '4 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('peyton.a', 'password', 'Peyton', 'Abbott', 'peyton.abbott@example.com', '555-222-0005', 'MA0005', '1992-12-30', '5 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('melany.n', 'password', 'Melany', 'Nelson', 'melany.nelson@example.com', '555-222-0006', 'MA0006', '1991-07-07', '6 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('dylan.b', 'password', 'Dylan', 'Banks', 'dylan.banks@example.com', '555-222-0007', 'MA0007', '1990-10-15', '7 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('cali.c', 'password', 'Cali', 'Carpenter', 'cali.carpenter@example.com', '555-222-0008', 'MA0008', '2000-04-12', '8 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('jeremy.h', 'password', 'Jeremy', 'Hutchinson', 'jeremy.hutchinson@example.com', '555-222-0009', 'MA0009', '2001-11-23', '9 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('jamie.u', 'password', 'Jamie', 'Underwood', 'jamie.underwood@example.com', '555-222-0010', 'MA0010', '2001-08-02', '10 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('reece.b', 'password', 'Reece', 'Barker', 'reece.barker@example.com', '555-222-0011', 'MA0011', '2002-06-06', '11 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('remington.b', 'password', 'Remington', 'Burns', 'remington.burns@example.com', '555-222-0012', 'MA0012', '2003-09-14', '12 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('august.o', 'password', 'August', 'Orr', 'august.orr@example.com', '555-222-0013', 'MA0013', '2004-03-31', '13 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('alaiya.w', 'password', 'Alaiya', 'Wilkins', 'alaiya.wilkins@example.com', '555-222-0014', 'MA0014', '2005-05-05', '14 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('yusuf.h', 'password', 'Yusuf', 'Herman', 'yusuf.herman@example.com', '555-222-0015', 'MA0015', '2004-01-20', '15 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
+('paulina.c', 'password', 'Paulina', 'Cunningham', 'paulina.cunningham@example.com', '555-222-0016', NULL, '2003-12-01', '16 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('alejandro.m', 'password', 'Alejandro', 'Monroe', 'alejandro.monroe@example.com', '555-222-0017', NULL, '2002-05-28', '17 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('carly.h', 'password', 'Carly', 'Hess', 'carly.hess@example.com', '555-222-0018', NULL, '2001-09-17', '18 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('lawrence.j', 'password', 'Lawrence', 'Joseph', 'lawrence.joseph@example.com', '555-222-0019', NULL, '2000-10-10', '19 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('gracelynn.q', 'password', 'Gracelynn', 'Quintero', 'gracelynn.quintero@example.com', '555-222-0020', NULL, '1999-02-22', '20 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('thatcher.g', 'password', 'Thatcher', 'Gross', 'thatcher.gross@example.com', '555-222-0021', NULL, '1998-04-27', '21 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('angel.g', 'password', 'Angel', 'Griffin', 'angel.griffin@example.com', '555-222-0022', NULL, '1997-07-19', '22 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('ayden.m', 'password', 'Ayden', 'Mills', 'ayden.mills@example.com', '555-222-0023', NULL, '1996-11-09', '23 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('june.f', 'password', 'June', 'Figueroa', 'june.figueroa@example.com', '555-222-0024', NULL, '1995-06-16', '24 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('spencer.h', 'password', 'Spencer', 'Huang', 'spencer.huang@example.com', '555-222-0025', NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('drew.c', 'password', 'Drew', 'Callahan', 'drew.callahan@example.com', '555-111-0021', NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('quinton.l', 'password', 'Quinton', 'Lucero', 'quinton.lucero@example.com', '555-111-0022', NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('ila.a', 'password', 'Ila', 'Adams', 'ila.adams@example.com', '555-111-0023', NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('hudson.s', 'password', 'Hudson', 'Stephenson', 'hudson.stephenson@example.com', '555-111-0024',NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active'),
+('khaleesi.s', 'password', 'Khaleesi', 'Schroeder', 'khaleesi.schroeder@example.com', '555-111-0025',NULL, '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'rider', 'active');
 
-INSERT INTO driver (first_name, last_name, email, phone_no, license_no, dob, 
-    street_address, city, state, country, zip_code, status) VALUES
-('Izaiah', 'Wall', 'izaiah.wall@example.com', '555-222-0001', 'MA0001', '2000-02-11', '1 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Jayda', 'Carpenter', 'jayda.carpenter@example.com', '555-222-0002', 'MA0002', '1990-05-21', '2 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Jeremy', 'Conner', 'jeremy.conner@example.com', '555-222-0003', 'MA0003', '1994-03-09', '3 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Alondra', 'Fitzgerald', 'alondra.fitzgerald@example.com', '555-222-0004', 'MA0004', '1993-01-18', '4 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Peyton', 'Abbott', 'peyton.abbott@example.com', '555-222-0005', 'MA0005', '1992-12-30', '5 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Melany', 'Nelson', 'melany.nelson@example.com', '555-222-0006', 'MA0006', '1991-07-07', '6 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Dylan', 'Banks', 'dylan.banks@example.com', '555-222-0007', 'MA0007', '1990-10-15', '7 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Cali', 'Carpenter', 'cali.carpenter@example.com', '555-222-0008', 'MA0008', '2000-04-12', '8 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Jeremy', 'Hutchinson', 'jeremy.hutchinson@example.com', '555-222-0009', 'MA0009', '2001-11-23', '9 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Jamie', 'Underwood', 'jamie.underwood@example.com', '555-222-0010', 'MA0010', '2001-08-02', '10 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Reece', 'Barker', 'reece.barker@example.com', '555-222-0011', 'MA0011', '2002-06-06', '11 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Remington', 'Burns', 'remington.burns@example.com', '555-222-0012', 'MA0012', '2003-09-14', '12 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('August', 'Orr', 'august.orr@example.com', '555-222-0013', 'MA0013', '2004-03-31', '13 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Alaiya', 'Wilkins', 'alaiya.wilkins@example.com', '555-222-0014', 'MA0014', '2005-05-05', '14 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Yusuf', 'Herman', 'yusuf.herman@example.com', '555-222-0015', 'MA0015', '2004-01-20', '15 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Paulina', 'Cunningham', 'paulina.cunningham@example.com', '555-222-0016', 'MA0016', '2003-12-01', '16 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Alejandro', 'Monroe', 'alejandro.monroe@example.com', '555-222-0017', 'MA0017', '2002-05-28', '17 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Carly', 'Hess', 'carly.hess@example.com', '555-222-0018', 'MA0018', '2001-09-17', '18 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Lawrence', 'Joseph', 'lawrence.joseph@example.com', '555-222-0019', 'MA0019', '2000-10-10', '19 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Gracelynn', 'Quintero', 'gracelynn.quintero@example.com', '555-222-0020', 'MA0020', '1999-02-22', '20 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Thatcher', 'Gross', 'thatcher.gross@example.com', '555-222-0021', 'MA0021', '1998-04-27', '21 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Angel', 'Griffin', 'angel.griffin@example.com', '555-222-0022', 'MA0022', '1997-07-19', '22 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Ayden', 'Mills', 'ayden.mills@example.com', '555-222-0023', 'MA0023', '1996-11-09', '23 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('June', 'Figueroa', 'june.figueroa@example.com', '555-222-0024', 'MA0024', '1995-06-16', '24 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active'), 
-('Spencer', 'Huang', 'spencer.huang@example.com', '555-222-0025', 'MA0025', '1994-01-03', '25 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'active');
-
-INSERT INTO users (username, password, role, rider_id, driver_id) VALUES
-('sabrina.m', 'password', 'rider', 1, NULL), 
-('lennon.o', 'password', 'rider', 2, NULL), 
-('laylani.c', 'password', 'rider', 3, NULL), 
-('killian.v', 'password', 'rider', 4, NULL), 
-('esme.r', 'password', 'rider', 5, NULL), 
-('wesley.c', 'password', 'rider', 6, NULL), 
-('julie.r', 'password', 'rider', 7, NULL), 
-('roy.a', 'password', 'rider', 8, NULL), 
-('kyra.r', 'password', 'rider', 9, NULL), 
-('eugene.p', 'password', 'rider', 10, NULL), 
-('bonnie.r', 'password', 'rider', 11, NULL), 
-('kian.c', 'password', 'rider', 12, NULL), 
-('kali.j', 'password', 'rider', 13, NULL), 
-('joaquin.b', 'password', 'rider', 14, NULL), 
-('ezra.a', 'password', 'rider', 15, NULL), 
-('kylo.b', 'password', 'rider', 16, NULL), 
-('brooklynn.m', 'password', 'rider', 17, NULL), 
-('landry.s', 'password', 'rider', 18, NULL), 
-('noor.f', 'password', 'rider', 19, NULL), 
-('andre.w', 'password', 'rider', 20, NULL), 
-('drew.c', 'password', 'rider', 21, NULL), 
-('quinton.l', 'password', 'rider', 22, NULL), 
-('ila.a', 'password', 'rider', 23, NULL), 
-('hudson.s', 'password', 'rider', 24, NULL), 
-('khaleesi.s', 'password', 'rider', 25, NULL), 
-('izaiah.w', 'password', 'driver', NULL, 1), 
-('jayda.c', 'password', 'driver', NULL, 2), 
-('jeremy.c', 'password', 'driver', NULL, 3), 
-('alondra.f', 'password', 'driver', NULL, 4), 
-('peyton.a', 'password', 'driver', NULL, 5), 
-('melany.n', 'password', 'driver', NULL, 6), 
-('dylan.b', 'password', 'driver', NULL, 7), 
-('cali.c', 'password', 'driver', NULL, 8), 
-('jeremy.h', 'password', 'driver', NULL, 9), 
-('jamie.u', 'password', 'driver', NULL, 10), 
-('reece.b', 'password', 'driver', NULL, 11), 
-('remington.b', 'password', 'driver', NULL, 12), 
-('august.o', 'password', 'driver', NULL, 13), 
-('alaiya.w', 'password', 'driver', NULL, 14), 
-('yusuf.h', 'password', 'driver', NULL, 15), 
-('paulina.c', 'password', 'driver', NULL, 16), 
-('alejandro.m', 'password', 'driver', NULL, 17), 
-('carly.h', 'password', 'driver', NULL, 18), 
-('lawrence.j', 'password', 'driver', NULL, 19), 
-('gracelynn.q', 'password', 'driver', NULL, 20), 
-('thatcher.g', 'password', 'driver', NULL, 21), 
-('angel.g', 'password', 'driver', NULL, 22), 
-('ayden.m', 'password', 'driver', NULL, 23), 
-('june.f', 'password', 'driver', NULL, 24), 
-('spencer.h', 'password', 'driver', NULL, 25);
-
-INSERT INTO car (driver_id, make, model, year, ext_color, int_color, int_materials, price, condition, license_plate_no) VALUES
+INSERT INTO car (user_id, make, model, year, ext_color, int_color, int_materials, price, condition, license_plate_no) VALUES
 (1, 'Toyota', 'Camry', 2020, 'Blue', 'Black', 'cloth', 18000, 'good', 'ABC0001'), 
 (2, 'Honda', 'Civic', 2019, 'White', 'Gray', 'cloth', 15000, 'very good', 'ABC0002'), 
 (3, 'Ford', 'Focus', 2025, 'Red', 'Black', 'cloth', 12000, 'good', 'ABC0003'), 
@@ -208,18 +113,18 @@ INSERT INTO car (driver_id, make, model, year, ext_color, int_color, int_materia
 (13, 'Ford', 'Fusion', 2019, 'Silver', 'Black', 'cloth', 17000, 'good', 'ABC0013'), 
 (14, 'Chevrolet', 'Equinox', 2023, 'Red', 'Black', 'cloth', 12500, 'fair', 'ABC0014'), 
 (15, 'Nissan', 'Altima', 2021, 'White', 'Black', 'cloth', 16500, 'good', 'ABC0015'), 
-(16, 'Hyundai', 'Santa Cruz', 2020, 'Blue', 'Gray', 'leather', 19500, 'very good', 'ABC0016'), 
-(17, 'Kia', 'Forte', 2019, 'Black', 'Black', 'cloth', 14500, 'good', 'ABC0017'), 
-(18, 'Subaru', 'Legacy', 2021, 'Gray', 'Black', 'cloth', 22000, 'excellent', 'ABC0018'), 
-(19, 'Tesla', 'Model Y', 2024, 'Blue', 'Beige', 'leather', 16000, 'good', 'ABC0019'), 
-(20, 'Audi', 'Q3', 2020, 'Silver', 'Black', 'cloth', 18500, 'very good', 'ABC0020'), 
-(21, 'Toyota', 'Camry', 2023, 'Green', 'Black', 'cloth', 13500, 'good', 'ABC0021'), 
-(22, 'Hyundai', 'Tucson', 2025, 'Yellow', 'Black', 'cloth', 12000, 'fair', 'ABC0022'), 
-(23, 'Ford', 'Focus', 2020, 'Gray', 'Black', 'cloth', 20000, 'very good', 'ABC0023'), 
-(24, 'Chevrolet', 'Malibu', 2019, 'Blue', 'Black', 'cloth', 15500, 'good', 'ABC0024'), 
-(25, 'BMW', 'M3', 2021, 'White', 'Black', 'leather', 24000, 'excellent', 'ABC0025');
+(1, 'Hyundai', 'Santa Cruz', 2020, 'Blue', 'Gray', 'leather', 19500, 'very good', 'ABC0016'),
+(2, 'Kia', 'Forte', 2019, 'Black', 'Black', 'cloth', 14500, 'good', 'ABC0017'),
+(3, 'Subaru', 'Legacy', 2021, 'Gray', 'Black', 'cloth', 22000, 'excellent', 'ABC0018'),
+(4, 'Tesla', 'Model Y', 2024, 'Blue', 'Beige', 'leather', 16000, 'good', 'ABC0019'),
+(5, 'Audi', 'Q3', 2020, 'Silver', 'Black', 'cloth', 18500, 'very good', 'ABC0020'),
+(6, 'Toyota', 'Camry', 2023, 'Green', 'Black', 'cloth', 13500, 'good', 'ABC0021'),
+(7, 'Hyundai', 'Tucson', 2025, 'Yellow', 'Black', 'cloth', 12000, 'fair', 'ABC0022'),
+(8, 'Ford', 'Focus', 2020, 'Gray', 'Black', 'cloth', 20000, 'very good', 'ABC0023'),
+(9, 'Chevrolet', 'Malibu', 2019, 'Blue', 'Black', 'cloth', 15500, 'good', 'ABC0024'),
+(10, 'BMW', 'M3', 2021, 'White', 'Black', 'leather', 24000, 'excellent', 'ABC0025');
 
-INSERT INTO history (rider_id, car_id, pickup_loc, dropoff_loc, fare_total, status, requested_at) VALUES
+INSERT INTO history (user_id, car_id, pickup_loc, dropoff_loc, fare_total, status, requested_at) VALUES
 (1, 1, 'Bridgewater', 'Boston', 55.50, 'canceled', '2025-11-01 12:00:00'),
 (2, 2, 'Bridgewater', 'Brockton', 25.25, 'completed', '2025-11-02 12:00:00'),
 (3, 3, 'Bridgewater', 'Taunton', 25.25, 'completed', '2025-11-03 12:00:00'),
@@ -245,31 +150,11 @@ INSERT INTO history (rider_id, car_id, pickup_loc, dropoff_loc, fare_total, stat
 (23, 23, 'Bridgewater', 'Taunton', 28.85, 'completed', '2025-11-03 12:00:00'),
 (24, 24, 'Bridgewater', 'Boston', 60.55, 'completed', '2025-11-04 12:00:00'),
 (25, 25, 'Bridgewater', 'Middleboro', 24.95, 'completed', '2025-11-05 12:00:00'),
-(1, 24, 'Bridgewater', 'Boston', 58.50, 'completed', '2025-11-01 12:00:00'),
-(2, 22, 'Bridgewater', 'Brockton', 18.75, 'canceled', '2025-11-02 12:00:00'),
-(3, 25, 'Bridgewater', 'Taunton', 19.20, 'completed', '2025-11-03 12:00:00'),
-(4, 14, 'Bridgewater', 'Boston', 50.10, 'completed', '2025-11-04 12:00:00'),
-(5, 15, 'Bridgewater', 'Middleboro', 14.60, 'completed', '2025-11-05 12:00:00'),
-(6, 16, 'Bridgewater', 'Raynham', 21.90, 'completed', '2025-11-01 12:00:00'),
-(7, 17, 'Bridgewater', 'New Bedford', 62.40, 'completed', '2025-11-02 12:00:00'),
-(8, 18, 'Bridgewater', 'Plymouth', 52.35, 'completed', '2025-11-03 12:00:00'),
-(9, 19, 'Bridgewater', 'Quincy', 39.80, 'completed', '2025-11-04 12:00:00'),
-(10, 11, 'Bridgewater', 'Providence', 71.25, 'completed', '2025-11-05 12:00:00'),
-(11, 12, 'Bridgewater', 'Boston', 57.95, 'completed', '2025-11-01 12:00:00'),
-(12, 2, 'Bridgewater', 'Brockton', 23.10, 'completed', '2025-11-02 12:00:00'),
-(13, 3, 'Bridgewater', 'Taunton', 27.65, 'completed', '2025-11-03 12:00:00'),
-(14, 4, 'Bridgewater', 'Boston', 69.70, 'completed', '2025-11-04 12:00:00'),
-(15, 5, 'Bridgewater', 'Middleboro', 15.25, 'completed', '2025-11-05 12:00:00'),
-(16, 6, 'Bridgewater', 'Raynham', 12.05, 'completed', '2025-11-01 12:00:00'),
-(17, 7, 'Bridgewater', 'New Bedford', 41.90, 'completed', '2025-11-02 12:00:00'),
-(18, 8, 'Bridgewater', 'Plymouth', 53.40, 'completed', '2025-11-03 12:00:00'),
-(19, 9, 'Bridgewater', 'Quincy', 34.15, 'completed', '2025-11-04 12:00:00'),
-(20, 1, 'Bridgewater', 'Providence', 75.80, 'completed', '2025-11-05 12:00:00'),
-(21, 21, 'Bridgewater', 'Boston', 55.15, 'completed', '2025-11-01 12:00:00'),
-(22, 20, 'Bridgewater', 'Brockton', 12.40, 'completed', '2025-11-02 12:00:00'),
-(23, 10, 'Bridgewater', 'Taunton', 18.85, 'completed', '2025-11-03 12:00:00'), 
-(24, 13, 'Bridgewater', 'Boston', 45.55, 'canceled', '2025-11-04 12:00:00'),
-(25, 23, 'Bridgewater', 'Middleboro', 14.95, 'completed', '2025-11-05 12:00:00');
+(26, 24, 'Bridgewater', 'Boston', 58.50, 'completed', '2025-11-01 12:00:00'),
+(27, 22, 'Bridgewater', 'Brockton', 18.75, 'canceled', '2025-11-02 12:00:00'),
+(28, 25, 'Bridgewater', 'Taunton', 19.20, 'completed', '2025-11-03 12:00:00'),
+(29, 14, 'Bridgewater', 'Boston', 50.10, 'completed', '2025-11-04 12:00:00'),
+(30, 15, 'Bridgewater', 'Middleboro', 14.60, 'completed', '2025-11-05 12:00:00');
 
 
 INSERT INTO payment (trip_id, pay_method, amount, status, processed_at) VALUES
@@ -302,24 +187,4 @@ INSERT INTO payment (trip_id, pay_method, amount, status, processed_at) VALUES
 (27, 'apple pay', 18.75, 'refunded', '2025-11-02 12:00:00'),
 (28, 'google pay', 19.20, 'completed', '2025-11-03 12:00:00'),
 (29, 'card', 50.10, 'completed', '2025-11-04 12:00:00'),
-(30, 'apple pay', 14.60, 'completed', '2025-11-05 12:00:00'),
-(31, 'google pay', 21.90, 'completed', '2025-11-01 12:00:00'),
-(32, 'card', 62.40, 'completed', '2025-11-02 12:00:00'),
-(33, 'apple pay', 52.35, 'completed', '2025-11-03 12:00:00'),
-(34, 'google pay', 39.80, 'completed', '2025-11-04 12:00:00'),
-(35, 'card', 71.25, 'completed', '2025-11-05 12:00:00'),
-(36, 'apple pay', 57.95, 'completed', '2025-11-01 12:00:00'),
-(37, 'google pay', 23.10, 'completed', '2025-11-02 12:00:00'),
-(38, 'card', 27.65, 'completed', '2025-11-03 12:00:00'),
-(39, 'apple pay', 69.70, 'completed', '2025-11-04 12:00:00'),
-(40, 'google pay', 15.25, 'completed', '2025-11-05 12:00:00'),
-(41, 'card', 12.05, 'completed', '2025-11-01 12:00:00'),
-(42, 'apple pay', 41.90, 'completed', '2025-11-02 12:00:00'),
-(43, 'google pay', 53.40, 'completed', '2025-11-03 12:00:00'),
-(44, 'card', 34.15, 'completed', '2025-11-04 12:00:00'),
-(45, 'apple pay', 75.80, 'completed', '2025-11-05 12:00:00'),
-(46, 'google pay', 55.15, 'completed', '2025-11-01 12:00:00'),
-(47, 'card', 12.40, 'completed', '2025-11-02 12:00:00'),
-(48, 'apple pay', 18.85, 'completed', '2025-11-03 12:00:00'),
-(49, 'google pay', 45.55, 'refunded', '2025-11-04 12:00:00'),
-(50, 'card', 14.95, 'completed', '2025-11-05 12:00:00');
+(30, 'apple pay', 14.60, 'completed', '2025-11-05 12:00:00');

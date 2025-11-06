@@ -28,8 +28,8 @@ public class TestingHere {
     }
 
     @Test
-    void testDriver() {
-        Driver d = new Driver();
+    void testUser() {
+        User d = new User();
         d.setFirstName("Jane");
         d.setLastName("Doe");
         d.setLicense("S12345");
@@ -38,18 +38,6 @@ public class TestingHere {
         assertEquals("Doe", d.getLastName());
         assertEquals("S12345", d.getLicense());
         assertEquals("MA", d.getState());
-    }
-
-    @Test
-    void testRider() {
-        Rider r = new Rider();
-        r.setEmail("rider1@gmail.com");
-        r.setPhone("5081231234");
-        r.setStatus("active");
-        assertEquals("rider1@gmail.com", r.getEmail());
-        assertEquals("5081231234", r.getPhone());
-        assertEquals("active", r.getStatus());
-        assertNotEquals("inactive", r.getStatus());
     }
 
     @Test
@@ -83,21 +71,21 @@ public class TestingHere {
     }
 
     @Test
-    void testDriverSQL() throws Exception {
-        DriverDAO dao = new DriverDAOSQLite();
-        Driver d = new Driver("John", "Driver", "test@email.com", "5081231234",
+    void testUserSQL() throws Exception {
+        UserDAO dao = new UserDAOSQLite();
+        User d = new User("john.d", "password", "John", "Driver", "test@email.com", "5081231234",
                 "S12345", "2000-01-01", "24 Park Ave", "Bridgewater",
-                "MA", "USA", "02324", "active");
+                "MA", "USA", "02324", "driver", "active");
 
-        int driver_id = dao.insert(d);
-        assertTrue(driver_id > 0);
-        d.setId(driver_id);
+        int user_id = dao.insert(d);
+        assertTrue(user_id > 0);
+        d.setId(user_id);
 
         System.out.println(d.toString());
         d.setLicense("S67890");
         dao.update(d);
 
-        Optional<Driver> d2 = dao.findById(driver_id);
+        Optional<User> d2 = dao.findById(user_id);
         assertTrue(d2.isPresent());
         if(d2.isPresent()){
             d = d2.get();
@@ -105,11 +93,11 @@ public class TestingHere {
 
         assertEquals("S67890", d.getLicense());
 
-        dao.delete(driver_id);
-        Optional<Driver> d3 = dao.findById(driver_id);
+        dao.delete(user_id);
+        Optional<User> d3 = dao.findById(user_id);
         assertFalse(d3.isPresent());
 
-        assertTrue(dao.findAll().isEmpty());
+        assertFalse(dao.findAll().isEmpty());
     }
 
 

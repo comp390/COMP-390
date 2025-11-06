@@ -1,8 +1,8 @@
 import java.util.Scanner;
 public class Car {
-    Driver driver;
+    User user;
     private int carId;
-    private int driverId;
+    private int userId;
     private String make;
     private String model;
     private int year;
@@ -17,13 +17,13 @@ public class Car {
     public Car(){}
 
     //Constructor
-    public Car(int carId, int driverId, Driver driver, String make, String model, int year,
+    public Car(int carId, int userId, User user, String make, String model, int year,
                String exteriorColor, String interiorColor, String licensePlate,
                double price, String condition, boolean isAvailable)
     {
         this.carId = carId;
-        this.driverId = driverId;
-        this.driver = driver;
+        this.userId = userId;
+        this.user = user;
         this.make = make;
         this.model = model;
         this.year = year;
@@ -36,8 +36,8 @@ public class Car {
     }
 
     //Getters
-    public Driver getDriver() {
-        return driver;
+    public User getUser() {
+        return user;
     }
     public int getCarId() {
         return carId;
@@ -74,14 +74,14 @@ public class Car {
     }
 
     //Setters
-    public void setDriver(Driver driver) {
-        this.driver = driver;
+    public void setUser(User user) {
+        this.user = user;
     }
     public void setCarId(int carId) {
         this.carId = carId;
     }
-    public void setDriverId(int driverId) {
-        this.driverId = driverId;
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
     public void setMake(String make) {
         this.make = make;
