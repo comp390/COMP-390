@@ -1,8 +1,11 @@
 import java.util.List;
 import java.util.Optional;
-// Interface defines basic operations (CRUD)
-// Each method here is implemented in DriverDAOSQLite
-
+/**
+ * HistoryDAO
+ * version 0.1
+ * 10/19/25
+ * Interface defines basic operations (CRUD)
+ */
 public interface HistoryDAO {
     int insert(History d) throws Exception;
     Optional<History> findById(int tripID) throws Exception;

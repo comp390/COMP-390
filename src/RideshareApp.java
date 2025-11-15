@@ -7,6 +7,8 @@ import java.sql.*;
 import javax.swing.event.*;
 import javax.swing.text.Document;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 public class RideshareApp extends JFrame {
 
@@ -16,6 +18,24 @@ public class RideshareApp extends JFrame {
     private static final String BOOK  = "book";
     private static final String PROF  = "profile";
     private static final String HIST  = "history";
+    private static final String VIEW_PROF = "viewProf";
+
+
+    private int currentUserID; // for now keep until correct login is implemented
+    private JLabel[] profileViewLabels;
+
+    // need these in the fiel area so we can load and make data persist
+    private JTextField firstNameT;
+    private JTextField lastNameT;
+    private JTextField emailT;
+    private JTextField phoneT;
+    private JTextField licenseT;
+    private JTextField dobT;
+    private JTextField streetT;
+    private JTextField cityT;
+    private JTextField stateT;
+    private JTextField countryT;
+    private JTextField zipT;
 
     // CardLayout and container
     private final CardLayout c1 = new CardLayout();
@@ -23,23 +43,30 @@ public class RideshareApp extends JFrame {
 
     public RideshareApp() {
         setTitle("Rideshare App"); // should we come up with a fun name?
+                                   // ^ Yes! I think we can do better!
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(800, 500);
         setLocationRelativeTo(null);
 
         // build each page, within their own methods (see GeeksforGeeks tutorial, jp1, jp2 ...)
         JPanel loginPage = buildLoginPage();
-        JPanel homePage = buildHomePage();
+
+        //NO NEEDED HERE!!! let's build it after user login, to show user info
+//      JPanel homePage = buildHomePage();
+//      cards.add(homePage, HOME);
+
         JPanel bookPage = buildBookingPage();
         JPanel profPage = buildProfilePage();
         JPanel histPage = buildHistoryPage();
+        JPanel viewProf = buildProfileOverviewPage();
 
         // add pages to CardLayout with our keys (see GeeksforGeeks tutorial "1", "2" ... cards)
         cards.add(loginPage, LOGIN);
-        cards.add(homePage, HOME);
+
         //cards.add(bookPage, BOOK);
         cards.add(profPage, PROF);
-        //cards.add(histPage, HIST);
+        cards.add(histPage, HIST);
+        cards.add(viewProf, VIEW_PROF);
 
         setContentPane(cards);
 
@@ -137,13 +164,55 @@ public class RideshareApp extends JFrame {
         passPF.getDocument().addDocumentListener(documentListener);
 
         loginButton.addActionListener(e -> {
-            if (userTF.getText().equals("user") &&
-                    new String(passPF.getPassword()).equals("password")) {
-                error.setText(" ");
-                c1.show(cards, HOME);
-            } else {
-                error.setText("Invalid username or password");
+
+            String username = userTF.getText().trim();
+            String password = new String(passPF.getPassword()).trim();
+
+            try {
+                UserDAOSQLite userDao = new UserDAOSQLite();
+                List<User> allUsers = userDao.findAll();
+
+                User matched = null;
+
+                //need protection (in-memory as plain text) Big no no!!
+                for (User u : allUsers){
+                    if (u.getUsername().equals(username) && u.getPassword().equals(password)) {
+                        matched = u;
+                        break;
+                    }
+                }
+
+                if (matched != null) {
+                    error.setText(" ");
+
+                    // This is the key part to track the user ID
+                     currentUserID = matched.getId();
+
+                    // rebuild to display user info if login
+                    JPanel newHome = buildHomePage();
+                    cards.add(newHome, HOME);
+
+                    // reload the data for the user
+                    loadUserIntoViewProf();
+
+                    c1.show(cards, HOME);
+                }else {
+                    error.setText("Invalid username or password");
+                    resetLoginFields(loginPage);
+                }
+            } catch (Exception ex) {
+                error.setText("User or password not match in database");
+                ex.printStackTrace();
             }
+
+            //
+//            if (userTF.getText().equals("user") &&
+//                    new String(passPF.getPassword()).equals("password")) {
+//                error.setText(" ");
+//                c1.show(cards, HOME);
+//            } else {
+//                error.setText("Invalid username or password");
+//            }
         });
 
 
@@ -151,12 +220,29 @@ public class RideshareApp extends JFrame {
         return loginPage;
     }
 
+    // This will return the current user's username
+    private String getCurrentUserName(){
+        try {
+            UserDAOSQLite dao = new UserDAOSQLite();
+            Optional<User> opt = dao.findById(currentUserID);
+            if (opt.isPresent()){
+                User u = opt.get();
+                return u.getUsername();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Commander";
+    }
+
     private JPanel buildHomePage() {
         //JPanel homePanel = new JPanel();
         JPanel homePanel = new JPanel(new BorderLayout(10, 10));
         homePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10 ,10));
 
-        JLabel title = new JLabel("Welcome to RideShare!");
+        String userName = getCurrentUserName();
+        JLabel title = new JLabel("Hi "+userName.toUpperCase(Locale.ROOT)+ "!\n Where're you heading today?");
+
         title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
         title.setHorizontalAlignment(JLabel.CENTER);
         homePanel.add(title, BorderLayout.NORTH);
@@ -172,10 +258,8 @@ public class RideshareApp extends JFrame {
 
         try {
             HistoryDAO historyDAO = new HistoryDAOSQLite();
-
-            int currentUserID = 1;
-
             List<History> userHistory = historyDAO.findUserHistory(currentUserID);
+
             totalTrips = userHistory.size();
 
             for (History trip : userHistory) {
@@ -193,35 +277,35 @@ public class RideshareApp extends JFrame {
             System.err.println("Error loading statistics: " + ex.getMessage());
         }
 
-    statsPanel.add(new JLabel("Total Trips: " + totalTrips));
-    statsPanel.add(new JLabel("Total Spent: $" + String.format("%.2f", totalSpent)));
-    statsPanel.add(new JLabel("Last Ride: " + lastRide));
+        statsPanel.add(new JLabel("Total Trips: " + totalTrips));
+        statsPanel.add(new JLabel("Total Spent: $" + String.format("%.2f", totalSpent)));
+        statsPanel.add(new JLabel("Last Ride: " + lastRide));
 
-    JPanel tripsPanel = new JPanel(new BorderLayout());
-    tripsPanel.setBorder(BorderFactory.createTitledBorder("Recent Trips"));
+        JPanel tripsPanel = new JPanel(new BorderLayout());
+        tripsPanel.setBorder(BorderFactory.createTitledBorder("Recent Trips"));
 
-    JPanel tripsList = new JPanel();
-    tripsList.setLayout(new BoxLayout(tripsList, BoxLayout.Y_AXIS));
+        JPanel tripsList = new JPanel();
+        tripsList.setLayout(new BoxLayout(tripsList, BoxLayout.Y_AXIS));
 
-    try {
-        HistoryDAO historyDAO = new HistoryDAOSQLite();
-        int currentUserID = 1;
-        List<History> userHistory = historyDAO.findUserHistory(currentUserID);
+        try {
+            HistoryDAO historyDAO = new HistoryDAOSQLite();
+            int currentUserID = 1;
+            List<History> userHistory = historyDAO.findUserHistory(currentUserID);
 
-        if (userHistory.isEmpty()) {
-            tripsList.add(new JLabel("No trips yet"));
-        } else {
-            int displayCount = Math.min(5, userHistory.size());
-            for (int i = userHistory.size() -1; i >= userHistory.size() - displayCount; i--){
-                History trip = userHistory.get(i);
-                String tripText = String.format("%s -> %s ($%.2f)",
-                        trip.getPickupLoc(), trip.getDropoffLoc(), trip.getFare());
-                tripsList.add(new JLabel(tripText));
+            if (userHistory.isEmpty()) {
+                tripsList.add(new JLabel("No trips yet"));
+            } else {
+                int displayCount = Math.min(5, userHistory.size());
+                for (int i = userHistory.size() -1; i >= userHistory.size() - displayCount; i--){
+                    History trip = userHistory.get(i);
+                    String tripText = String.format("%s -> %s ($%.2f)",
+                            trip.getPickupLoc(), trip.getDropoffLoc(), trip.getFare());
+                    tripsList.add(new JLabel(tripText));
+                    }
                 }
+            } catch (Exception ex) {
+                tripsList.add(new JLabel("Error loading trips"));
             }
-        } catch (Exception ex) {
-            tripsList.add(new JLabel("Error loading trips"));
-        }
 
         JScrollPane scrollPane = new JScrollPane(tripsList);
         scrollPane.setPreferredSize(new Dimension( 300, 100));
@@ -245,17 +329,18 @@ public class RideshareApp extends JFrame {
 
         JButton historyButton = new JButton("View History");
         historyButton.addActionListener(e -> {
-            //TODO: Uncomment when history page is implemented
-            //c1.show(cards, HIST);
-
-            JOptionPane.showMessageDialog(this, 
-            "History page is under construction",
-            "Coming Soon",
-            JOptionPane.INFORMATION_MESSAGE);
+            JPanel histPage = buildHistoryPage();
+            cards.add(histPage, HIST);
+            c1.show(cards, HIST);
         });
 
     JButton profileButton = new JButton("Profile");
-    profileButton.addActionListener(e -> c1.show(cards, PROF));
+    profileButton.addActionListener(e -> {
+            // load current user into profile form each time user clicks Profile
+            loadUserIntoViewProf();
+            //loadCurrentUserIntoProfile();
+            c1.show(cards, VIEW_PROF);
+    });
 
     JButton logoutButton = new JButton("Log Out");
     logoutButton.addActionListener(e -> {
@@ -276,8 +361,79 @@ public class RideshareApp extends JFrame {
     return homePanel;
     
     }
-//helper method to reset login fields on logout
-private void resetLoginFields(JPanel panel){
+
+    // Call this when opening the Profile page so field are populated from DB
+    private void loadCurrentUserIntoProfile() {
+        try {
+            UserDAOSQLite userDAO = new UserDAOSQLite();
+            Optional<User> opt = userDAO.findById(currentUserID);
+            if (!opt.isPresent()) {
+                // clear fields or leave placeholders as-is
+                System.err.println("No user found for id=" + currentUserID);
+                return;
+            }
+            User u = opt.get();
+
+            // setText but avoid setting placeholders unintentionally
+            firstNameT.setForeground(Color.BLACK);
+            lastNameT.setForeground(Color.BLACK);
+            emailT.setForeground(Color.BLACK);
+            phoneT.setForeground(Color.BLACK);
+            licenseT.setForeground(Color.BLACK);
+            dobT.setForeground(Color.BLACK);
+            streetT.setForeground(Color.BLACK);
+            cityT.setForeground(Color.BLACK);
+            stateT.setForeground(Color.BLACK);
+            countryT.setForeground(Color.BLACK);
+            zipT.setForeground(Color.BLACK);
+
+            firstNameT.setText(u.getFirstName() == null ? "" : u.getFirstName());
+            lastNameT.setText(u.getLastName() == null ? "" : u.getLastName());
+            emailT.setText(u.getEmail() == null ? "" : u.getEmail());
+            phoneT.setText(u.getPhone() == null ? "" : u.getPhone());
+            licenseT.setText(u.getLicense() == null ? "" : u.getLicense());
+            dobT.setText(u.getDob() == null ? "" : u.getDob());
+            streetT.setText(u.getStreetAddress() == null ? "" : u.getStreetAddress());
+            cityT.setText(u.getCity() == null ? "" : u.getCity());
+            stateT.setText(u.getState() == null ? "" : u.getState());
+            countryT.setText(u.getCountry() == null ? "" : u.getCountry());
+            zipT.setText(u.getZipCode() == null ? "" : u.getZipCode());
+
+        } catch (Exception e) {
+            System.err.println("Error loading profile: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Call this when opening the Profile page so field are populated from DB
+    private void loadUserIntoViewProf() {
+        try {
+            UserDAOSQLite user = new UserDAOSQLite();
+            Optional<User> opt = user.findById(currentUserID);
+
+            if (!opt.isPresent()) return;
+
+            User curentUser = opt.get();
+
+            profileViewLabels[0].setText(curentUser.getFirstName());
+            profileViewLabels[1].setText(curentUser.getLastName());
+            profileViewLabels[2].setText(curentUser.getEmail());
+            profileViewLabels[3].setText(curentUser.getPhone());
+            profileViewLabels[4].setText(curentUser.getLicense());
+            profileViewLabels[5].setText(curentUser.getDob());
+            profileViewLabels[6].setText(curentUser.getStreetAddress());
+            profileViewLabels[7].setText(curentUser.getCity());
+            profileViewLabels[8].setText(curentUser.getState());
+            profileViewLabels[9].setText(curentUser.getCountry());
+            profileViewLabels[10].setText(curentUser.getZipCode());
+        } catch (Exception e) {
+            System.err.println("Error : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    //helper method to reset login fields on logout
+    private void resetLoginFields(JPanel panel){
     for (Component comp : panel.getComponents()){
         if (comp instanceof JTextField && !(comp instanceof JPasswordField)){
             JTextField field = (JTextField) comp;
@@ -301,8 +457,6 @@ private void resetLoginFields(JPanel panel){
     private JPanel buildBookingPage() {
         return null;
     }
-
-
 
     private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
         gbc.gridx = 0;
@@ -344,7 +498,7 @@ private void resetLoginFields(JPanel panel){
     /**
      * Builds the main Profile Page panel with nested layouts for perfect alignment.
      */
-    JPanel buildProfilePage() {
+    private JPanel buildProfilePage() {
         // needed to count rows in the grid
         int prow = 0;
         int adrow = 0;
@@ -357,7 +511,7 @@ private void resetLoginFields(JPanel panel){
         JPanel gridPii = new JPanel(new GridBagLayout());
         gridPii.setBorder(BorderFactory.createTitledBorder("Personal Information"));
         GridBagConstraints gbc1 = new GridBagConstraints();
-        gbc1.insets = new Insets(4,6,4,6);
+        gbc1.insets = new Insets(4,7,4,6);
         gbc1.anchor = GridBagConstraints.WEST;
         gbc1.fill = GridBagConstraints.HORIZONTAL;
 
@@ -365,37 +519,33 @@ private void resetLoginFields(JPanel panel){
         JLabel title = new JLabel("<html><h1>Profile</h1></html>");
         profilePage.add(title, BorderLayout.NORTH);
 
+        // Using the instance variable from the field area
+        firstNameT =  new JTextField();
+        firstNameT.setColumns(20);
+        textHelper(firstNameT, "Ride");
+        prow = addRowHelper(gridPii, gbc1, prow,"First Name:", firstNameT);
 
+        lastNameT =  new JTextField();
+        lastNameT.setColumns(20);
+        textHelper(lastNameT, "Share");
+        prow = addRowHelper(gridPii, gbc1, prow,"Last Name:", lastNameT);
 
-        // add labes, text boxes & rows
-        // row 0
-        JTextField nameT =  new JTextField();
-        nameT.setColumns(20);
-        textHelper(nameT, "Ride Share");
-        prow = addRowHelper(gridPii, gbc1, prow,"Full Name:", nameT);
-
-        // row 1
-        JTextField emailT = new JTextField();
+        emailT = new JTextField();
         emailT.setColumns(11);
         textHelper(emailT, "rideshare@bridgew.com");
         prow = addRowHelper(gridPii,gbc1,prow, "Email:",emailT);
 
-
-        // row 2
-        JTextField phoneT = new JTextField();
+        phoneT = new JTextField();
         phoneT.setColumns(11);
         textHelper(phoneT, "###-###-####");
         prow = addRowHelper(gridPii, gbc1, prow, "Phone Number:", phoneT);
 
-        // row 3
-        JTextField licenseT = new JTextField();
+        licenseT = new JTextField();
         licenseT.setColumns(11);
         textHelper(licenseT, "ABC-123");
         prow = addRowHelper(gridPii, gbc1, prow, "License Plate:", licenseT);
 
-        // row 4
-        //JLabel dobL = new JLabel("Date of Birth:");
-        JTextField dobT = new JTextField();
+        dobT = new JTextField();
         dobT.setColumns(11);
         textHelper(dobT, "YYYY-MM-DD");
         prow = addRowHelper(gridPii, gbc1, prow, "Date of Birth:", dobT);
@@ -408,44 +558,31 @@ private void resetLoginFields(JPanel panel){
         gbc2.anchor = GridBagConstraints.WEST;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
 
-
-        // address info labels and text boxes
-        // row 1
-        //JLabel streetL = new JLabel("Street:");
-        JTextField streetT = new JTextField();
+        // keep using the instance fiels
+        streetT = new JTextField();
         streetT.setColumns(15);
         textHelper(streetT, "123 Plymouth St");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "Street:", streetT);
 
-        // row 2
-        //JLabel cityL = new JLabel("City:");
-        JTextField cityT = new JTextField();
+        cityT = new JTextField();
         cityT.setColumns(11);
         textHelper(cityT, "Bridgewater");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "City:", cityT);
 
-        //row 3
-        //JLabel stateL = new JLabel("State:");
-        JTextField stateT = new JTextField();
+        stateT = new JTextField();
         stateT.setColumns(9);
         textHelper(stateT, "MA");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "State:", stateT);
 
-        // row 4
-        //JLabel countryL = new JLabel("Country:");
-        JTextField countryT = new JTextField();
+        countryT = new JTextField();
         countryT.setColumns(8);
         textHelper(countryT, "USA");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "Country:", countryT);
 
-        // row 5
-        //JLabel zipL = new JLabel("ZIP Code:");
-        JTextField zipT = new JTextField();
+        zipT = new JTextField();
         zipT.setColumns(8);
         textHelper(zipT, "#####");
         adrow = addRowHelper(gridAddr, gbc2, adrow, "ZIP Code:", zipT);
-
-
 
         // add Panel and addrPanel to center side-by-side
         JPanel center = new JPanel(new GridLayout(1,2,0,0)); // <===
@@ -518,22 +655,178 @@ private void resetLoginFields(JPanel panel){
         // buttons
         JButton saveButton = new JButton("Save");
         saveButton.addActionListener(event -> {
-            //TODO I need to implement the storing info part
+            UserDAOSQLite user = new UserDAOSQLite();
 
-            // Go to the home card
-            c1.show(cards, HOME);
+            try {
+                //load existing user
+                Optional<User> opt = user.findById(currentUserID);
+                if (!opt.isPresent()){
+                    JOptionPane.showMessageDialog(this, "User ID " +currentUserID+ " Not Found!",
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                User currentUser = opt.get();
+
+                currentUser.setFirstName(firstNameT.getText().trim());
+                currentUser.setLastName(lastNameT.getText().trim());
+                currentUser.setEmail(emailT.getText().trim());
+                currentUser.setPhone(phoneT.getText().trim());
+                currentUser.setLicense(licenseT.getText().trim());
+                currentUser.setDob(dobT.getText().trim());
+                currentUser.setStreetAddress(streetT.getText().trim());
+                currentUser.setCity(cityT.getText().trim());
+                currentUser.setState(stateT.getText().trim());
+                currentUser.setCountry(countryT.getText().trim());
+                currentUser.setZipCode(zipT.getText().trim());
+
+                int rows = user.update(currentUser);
+                if (rows > 0){
+                    JOptionPane.showMessageDialog(this,"Profile updated!",
+                            "Success",JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,"Changes were not saved.",
+                            "Attention",JOptionPane.INFORMATION_MESSAGE);
+                }
+
+                loadUserIntoViewProf();
+                // Go to the home card
+                c1.show(cards, VIEW_PROF);
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error saving "+
+                        e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // set bottom to the lower-right of the frame
         JPanel buttonPosition = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPosition.add(saveButton);
         profilePage.add(buttonPosition, BorderLayout.SOUTH);
 
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e ->{
+            loadCurrentUserIntoProfile();
+            loadUserIntoViewProf();
+            c1.show(cards, VIEW_PROF);
+        });
+
+
+        buttonPosition.add(saveButton);
+        buttonPosition.add(backButton);
         return profilePage;
     }
 
+    private JPanel buildProfileOverviewPage() {
+        JPanel p = new JPanel(new BorderLayout(10,10));
+        p.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+        JLabel title = new JLabel("<html><h1>My Profile<h1></html>");
+        p.add(title, BorderLayout.NORTH);
+
+        // pairs of panels
+        JPanel info = new JPanel(new GridLayout(0,2,10,10));
+        JLabel firstNameL = new JLabel();
+        JLabel lastNameL = new JLabel();
+        JLabel emailL = new JLabel();
+        JLabel phoneL = new JLabel();
+        JLabel licenseL = new JLabel();
+        JLabel dobL = new JLabel();
+        JLabel streetL = new JLabel();
+        JLabel cityL = new JLabel();
+        JLabel stateL = new JLabel();
+        JLabel countryL = new JLabel();
+        JLabel zipL = new JLabel();
+
+        // store it to update
+        this.profileViewLabels = new JLabel[]{
+                firstNameL, lastNameL, emailL, phoneL,
+                licenseL, dobL, streetL, cityL,stateL,
+                countryL, zipL
+        };
+
+        // add to pannel
+        info.add(new JLabel("First Name:")); info.add(firstNameL);
+        info.add(new JLabel("Last Name:")); info.add(lastNameL);
+        info.add(new JLabel("Email:")); info.add(emailL);
+        info.add(new JLabel("Phone:")); info.add(phoneL);
+        info.add(new JLabel("License Plate:")); info.add(licenseL);
+        info.add(new JLabel("DoB:")); info.add(dobL);
+        info.add(new JLabel("Street:")); info.add(streetL);
+        info.add(new JLabel("City:")); info.add(cityL);
+        info.add(new JLabel("State:")); info.add(stateL);
+        info.add(new JLabel("Country:")); info.add(countryL);
+        info.add(new JLabel("ZIP Code:")); info.add(zipL);
+
+        p.add(info, BorderLayout.CENTER);
+
+        JButton editButton = new JButton("Edit Profile");
+        editButton.addActionListener(e -> {
+
+            //loadUserIntoProfileView();
+            loadCurrentUserIntoProfile();
+            c1.show(cards, PROF);
+        });
+
+        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+        JButton backB = new JButton("Back");
+        backB.addActionListener(e -> {
+
+            c1.show(cards, HOME);
+        });
+
+        lower.add(backB);
+        lower.add(editButton);
+
+        p.add(lower, BorderLayout.SOUTH);
+        return  p;
+    }
+
+
     private JPanel buildHistoryPage() {
-        return null;
+        JPanel p = new JPanel(new BorderLayout(10,10));
+
+        JLabel title = new JLabel("<html><h1>History of My Trips</h1></html>");
+        p.add(title, BorderLayout.NORTH);
+
+        //list panels
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+
+        try {
+            HistoryDAO histDao = new HistoryDAOSQLite();
+            List<History> trips = histDao.findUserHistory(currentUserID);
+
+            if (trips.isEmpty()) {
+                listPanel.add(new JLabel("No Previous Trips."));
+            } else {
+                for (History h : trips) {
+                    String text = String.format(
+                            "Trip #%d  |  %s -> %s  |  $%.2f  |  %s",
+                            h.getHistoryID(),
+                            h.getPickupLoc(),
+                            h.getDropoffLoc(),
+                            h.getFare(),
+                            h.getStatus()
+                    );
+                    listPanel.add(new JLabel((text)));
+                }
+            }
+        } catch (Exception e) {
+            listPanel.add(new JLabel("Error loading your travels history."));
+            e.printStackTrace();
+        }
+
+        JScrollPane scrollP = new JScrollPane(listPanel);
+        p.add(scrollP, BorderLayout.CENTER);
+
+        JButton backButton = new JButton("Bakc");
+        backButton.addActionListener(e -> c1.show(cards, HOME));
+
+        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        lower.add(backButton);
+        p.add(lower, BorderLayout.SOUTH);
+
+        return p;
     }
 
     public static void main(String[] args) {

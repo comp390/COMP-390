@@ -1,6 +1,11 @@
-
+/**
+ * History
+ * version 0.1
+ * 10/19/25
+ * This class holds information about the trip itself
+ */
 public class History {
-    private int tripID;
+    private int tripID;     //
     private int userID;
     private int carID;
     private String requestedAt;
@@ -10,7 +15,9 @@ public class History {
     private String status;
     private String licensePlateNo;
 
-    // Empty Constructor
+    /**
+     * Empty Constructor for this class
+     */
     public History() {
     }
 
@@ -120,44 +127,77 @@ public class History {
         return licensePlateNo;
     }
 
-    // Setters
+    /**
+     * Sets the history ID
+     * @param tripID Integer, The ID of the trip
+     */
     public void setHistoryID(int tripID) {
         this.tripID = tripID;
     }
 
+    /**
+     * Sets the time of the request
+     * @param requestedAt String, Time
+     */
     public void setRequestedAt(String requestedAt) {
         this.requestedAt = requestedAt;
     }
 
+    /**
+     *  Sets the location where to pick up the rider
+     * @param pickupLoc String, address of the location
+     */
     public void setPickupLoc(String pickupLoc) {
         this.pickupLoc = pickupLoc;
     }
 
+    /**
+     * Sets the location to drop the rider
+     * @param dropoffLoc String, address on the location
+     */
     public void setDropoffLoc(String dropoffLoc) {
         this.dropoffLoc = dropoffLoc;
     }
 
+    /**
+     * The amount being charge to the rider
+     * @param fare Double, total amount
+     */
     public void setFare(Double fare) {
         this.fare = fare;
     }
 
+    /**
+     * Sets the status of the trip
+     * @param status String
+     */
     public void setStatus(String status) {
         this.status = status;
     }
 
+    /**
+     * Sets the license plate number of the car used by the driver
+     * @param licensePlateNo String
+     */
     public void setLicensePlateNo(String licensePlateNo) {
         this.licensePlateNo = licensePlateNo;
     }
 
+    /**
+     * The ID of the rider user
+     * @param riderID Integer
+     */
     public void setUserID(Integer riderID) {
         this.userID = validateUserID(userID);
     }
 
+    /**
+     * The ID given to the car
+     * @param carID Integer
+     */
     public void setCarID(Integer carID) {
         this.carID = validateCarID(carID);
     }
-
-    // check Rider id is not empty
 
     /**
      * This function validate the rider given ID and returns it back if it's valid.

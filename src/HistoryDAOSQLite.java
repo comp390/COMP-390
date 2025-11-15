@@ -2,17 +2,24 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-// This class handles interactions between our program and our database.
-// DAOs contain all the database specific code that allows the application
-// to interact with data without dealing with how it's stored or retrieved.
-
+/**
+ * HistoryDAOSQLite
+ * version 0.1
+ * 10/19/25
+ * This class handles interactions between our program and our database.
+ * DAOs contain all the database specific code that allows the application
+ * to interact with data without dealing with how it's stored or retrieved.
+ */
 public class HistoryDAOSQLite implements HistoryDAO{
-    // Adds a new Trip record/row to the database
-    // trip_id is automatically generate by the database so it's not included
-    // in the INSERT statement, but added to the History object for the application after.
 
     @Override
+    /**
+     * Adds a new Trip record/row to the database
+     * trip_id is automatically generate by the database so it's not included
+     * in the INSERT statement, but added to the History object for the application after.
+     * @param History Take a class History
+     * @excpe
+     */
     public int insert(History h) throws Exception {
         // SQL query statement for easy usage and maintenance
         String INSERT_HISTORY_SQL = "INSERT INTO history (user_id, car_id, requested_at, pickup_loc, " +
@@ -38,8 +45,10 @@ public class HistoryDAOSQLite implements HistoryDAO{
         }
     }
 
-    // Identify single Trip from the database history table using trip_id
     @Override
+    /**
+     * Identify single Trip from the database history table using trip_id
+     */
     public Optional<History> findById(int tripID) throws Exception {
         // SQL query statement for easy usage and maintenance
         String SELECT_HISTORY_BY_ID_SQL = "SELECT h.*, c.user_id, c.license_plate_no " +

@@ -29,7 +29,10 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-
+.jar
 ### SQLite Database generateed locally ###
 *.db
 rideshare.sqbpro
+
+### Mine
+.ignore

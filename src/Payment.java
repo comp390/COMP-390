@@ -1,5 +1,6 @@
-
-
+/**
+ *
+ */
 public class Payment {
     private int paymentID;
     private int tripID;
