@@ -6,9 +6,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -1069,30 +1067,54 @@ public class RideshareApp extends JFrame {
     }
 
     /**
+     * Initializes the SQLite schema and seed data by checking if the database already
+     * contains user defined tables, if not it loads the executes the AQL statements from schema.sql
+     *
+     * @param c
+     * @throws SQLException
+     */
+    public static void initializeSchema(Connection c) throws Exception {
+        try (Statement s = c.createStatement()) {
+            ResultSet rs = s.executeQuery("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%';");
+            if (!rs.next()) { // No user-defined tables found
+                System.out.println("Database is empty. Running schema initialization.");
+                String schemaFile;
+                try {
+                    schemaFile = Files.readString(Paths.get("schema.sql"));
+                } catch (Exception e) {
+                    throw new Exception("Failed to read schema.sql", e);
+                }
+                for (String statement : schemaFile.split(";")) {
+                    String trimmed = statement.trim();
+                    if (!trimmed.isEmpty()){
+                        s.execute(trimmed + ";");
+                    }
+                }
+                System.out.println("Schema and seed successfully initialized.");
+            } else {
+                System.out.println("Database already contains tables. No schema initialization needed.");
+            }
+        }
+    }
+
+    /**
      * Main calls for the app
      * @param args -
      */
     public static void main(String[] args) {
-        String schemaFile = "schema.sql";
         String databaseURL = "jdbc:sqlite:rideshare.db";
 
         // establish connection through jdbc (.jar file in lib)
         // if no such database is found it will create locally for you, otherwise connect to db
-        try (Connection c = DriverManager.getConnection(databaseURL);
-             Statement s = c.createStatement()) {
-            // Read the entire schema.sql file into a String
-            String sql = Files.readString(Paths.get(schemaFile));
-            // Execute each statement separated by semicolons
-            for (String statement : sql.split(";")) {
-                String trimmed = statement.trim();
-                if (!trimmed.isEmpty()) {
-                    s.execute(trimmed + ";");
-                }
-            }
-
-            System.out.println("Schema loaded successfully!");
+        try (Connection c = DriverManager.getConnection(databaseURL)) {
+             try (Statement s = c.createStatement()) {
+                 s.execute("PRAGMA foreign_keys = ON");
+             }
+            initializeSchema(c);
+            System.out.println("Database loaded successfully!");
         } catch (Exception e) {
             System.out.println("Error loading schema: " + e.getMessage());
+            e.printStackTrace();
         }
 
 //      app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
