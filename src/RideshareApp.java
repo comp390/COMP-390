@@ -562,12 +562,12 @@ public class RideshareApp extends JFrame {
         //back -> home
         backBttn.addActionListener(e -> c1.show(cards, HOME));
 
-        //viewBttn.addActionListener(e -> {
-        // ImageIcon img = new ImageIcon("path/to/img.png");
-        // JLabel imgL = new JLable(img);
-        // mapHolder.add(imgL, BorderLayout.CENTER);
-        // mapHolder.repaint();
-        // });
+        viewBttn.addActionListener(e -> {
+        ImageIcon img = new ImageIcon("images/basicTrip.png");
+        JLabel imgL = new JLabel(img);
+        mapHolder.add(imgL, BorderLayout.CENTER);
+        mapHolder.repaint();
+        });
 
         // request botton
         reqBttn.addActionListener(e -> {
@@ -1056,7 +1056,7 @@ public class RideshareApp extends JFrame {
         JScrollPane scrollP = new JScrollPane(listPanel);
         p.add(scrollP, BorderLayout.CENTER);
 
-        JButton backButton = new JButton("Bakc");
+        JButton backButton = new JButton("Back");
         backButton.addActionListener(e -> c1.show(cards, HOME));
 
         JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
