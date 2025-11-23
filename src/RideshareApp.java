@@ -249,131 +249,178 @@ public class RideshareApp extends JFrame {
      * @return JPanel for the Home page
      */
     private JPanel buildHomePage() {
-        //JPanel homePanel = new JPanel();
-        JPanel homePanel = new JPanel(new BorderLayout(10, 10));
-        homePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10 ,10));
+        // Main container background
+        JPanel homePanel = new JPanel(new BorderLayout());
+        homePanel.setBackground(Style.APP_BACKGROUD);
 
+        // 2. Content Wrapper
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
+        // --- Logic: Fetch Data (Same as before) ---
         String userName = getCurrentUserName();
-        JLabel title = new JLabel("Hi "+userName.toUpperCase(Locale.ROOT)+ "!\n Where're you heading today?");
-
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
-        title.setHorizontalAlignment(JLabel.CENTER);
-        homePanel.add(title, BorderLayout.NORTH);
-
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 0));
-
-        JPanel statsPanel = new JPanel(new GridLayout(0, 1, 5, 5));
-        statsPanel.setBorder(BorderFactory.createTitledBorder("Your Account"));
-
         int totalTrips = 0;
         double totalSpent = 0.0;
-        String lastRide = "No rides yet";
+        String lastRideLoc = "No rides yet";
+        List<History> recentTrips = null;
 
         try {
             HistoryDAO historyDAO = new HistoryDAOSQLite();
             List<History> userHistory = historyDAO.findUserHistory(currentUserID);
-
+            recentTrips = userHistory;
             totalTrips = userHistory.size();
-
             for (History trip : userHistory) {
-                if (trip.getFare() != null) {
-                    totalSpent += trip.getFare();
-                }
+                if (trip.getFare() != null) totalSpent += trip.getFare();
             }
-
             if (!userHistory.isEmpty()) {
-                History last = userHistory.get(userHistory.size() - 1);
-                lastRide = last.getPickupLoc() + " to " + last.getDropoffLoc();
+                lastRideLoc = userHistory.get(userHistory.size() - 1).getDropoffLoc();
             }
-
         } catch (Exception ex) {
-            System.err.println("Error loading statistics: " + ex.getMessage());
+            System.err.println("Error loading stats: " + ex.getMessage());
         }
 
-        statsPanel.add(new JLabel("Total Trips: " + totalTrips));
-        statsPanel.add(new JLabel("Total Spent: $" + String.format("%.2f", totalSpent)));
-        statsPanel.add(new JLabel("Last Ride: " + lastRide));
+        // --- Layout Constraints Setup ---
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(0, 0, 0, 0);
+        g.gridx = 0;
 
-        JPanel tripsPanel = new JPanel(new BorderLayout());
-        tripsPanel.setBorder(BorderFactory.createTitledBorder("Recent Trips"));
+        // FIX: Crucial settings to stop stretching
+        g.anchor = GridBagConstraints.NORTH; // Anchor to top
+        g.fill = GridBagConstraints.HORIZONTAL; // Only stretch width, NOT height
+        g.weightx = 1.0;
+        g.weighty = 0.0; // Do not give vertical space to these rows
 
-        JPanel tripsList = new JPanel();
-        tripsList.setLayout(new BoxLayout(tripsList, BoxLayout.Y_AXIS));
+        // --- Row 0: Header ---
+        g.gridy = 0;
+        JLabel welcome = new JLabel("Welcome back, " + userName);
+        welcome.setFont(Style.FONT_HEADER);
+        welcome.setForeground(Style.TEXT_DARK);
+        content.add(welcome, g);
 
-        try {
-            HistoryDAO historyDAO = new HistoryDAOSQLite();
-            int currentUserID = 1;
-            List<History> userHistory = historyDAO.findUserHistory(currentUserID);
+        // --- Row 1: Stats Grid ---
+        g.gridy = 1;
+        g.insets = new Insets(20, 0, 0, 0);
 
-            if (userHistory.isEmpty()) {
-                tripsList.add(new JLabel("No trips yet"));
-            } else {
-                int displayCount = Math.min(5, userHistory.size());
-                for (int i = userHistory.size() -1; i >= userHistory.size() - displayCount; i--){
-                    History trip = userHistory.get(i);
-                    String tripText = String.format("%s -> %s ($%.2f)",
-                            trip.getPickupLoc(), trip.getDropoffLoc(), trip.getFare());
-                    tripsList.add(new JLabel(tripText));
-                    }
-                }
-            } catch (Exception ex) {
-                tripsList.add(new JLabel("Error loading trips"));
-            }
+        // GridLayout with 10px horizontal gap
+        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 15, 0));
+        statsPanel.setBackground(Style.APP_BACKGROUD);
 
-        JScrollPane scrollPane = new JScrollPane(tripsList);
-        scrollPane.setPreferredSize(new Dimension( 300, 100));
-        tripsPanel.add(scrollPane, BorderLayout.CENTER);
+        statsPanel.add(createStatCard("Total Trips", String.valueOf(totalTrips)));
+        statsPanel.add(createStatCard("Total Spent", String.format("$%.2f", totalSpent)));
+        statsPanel.add(createStatCard("Last Drop-off", lastRideLoc));
 
-        centerPanel.add(statsPanel);
-        centerPanel.add(tripsPanel);
-        homePanel.add(centerPanel, BorderLayout.CENTER);
+        content.add(statsPanel, g);
 
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // --- Row 2: Section Header ---
+        g.gridy = 2;
+        content.add(createSectionHeader("Quick Actions"), g);
 
-        JButton bookRideButton = new JButton("Book a Ride");
-        bookRideButton.addActionListener(e -> {
+        // --- Row 3: Action Buttons ---
+        g.gridy = 3;
+        JPanel actionPanel = new JPanel(new GridLayout(1, 3, 15, 0));
+        actionPanel.setBackground(Style.APP_BACKGROUD);
 
-            // refresh the page by rebuilding it
+        JButton bookBtn = new JButton("Book a Ride");
+        styleButton(bookBtn);
+        bookBtn.setBackground(Style.BLUE);
+
+        JButton profileBtn = new JButton("My Profile");
+        styleButton(profileBtn);
+        profileBtn.setBackground(Style.TEXT_DARK);
+
+        JButton logoutBtn = new JButton("Log Out");
+        styleButton(logoutBtn);
+        logoutBtn.setBackground(Style.ERROR_RED);
+
+        // (Action Listeners kept same)
+        bookBtn.addActionListener(e -> {
             JPanel booking = buildBookingPage();
             cards.add(booking, BOOK);
             c1.show(cards, BOOK);
         });
-
-        JButton historyButton = new JButton("View History");
-        historyButton.addActionListener(e -> {
-
-            // refresh the page by rebuilding it
-            JPanel histPage = buildHistoryPage();
-            cards.add(histPage, HIST);
-            c1.show(cards, HIST);
+        profileBtn.addActionListener(e -> {
+            loadUserIntoViewProf();
+            c1.show(cards, VIEW_PROF);
+        });
+        logoutBtn.addActionListener(e -> {
+            Component loginPage = cards.getComponent(0);
+            if (loginPage instanceof JPanel) resetLoginFields((JPanel) loginPage);
+            c1.show(cards, LOGIN);
         });
 
-    JButton profileButton = new JButton("Profile");
-    profileButton.addActionListener(e -> {
-            // load current user into profile form each time user clicks Profile
-            loadUserIntoViewProf();
-            //loadCurrentUserIntoProfile();
-            c1.show(cards, VIEW_PROF);
-    });
+        actionPanel.add(bookBtn);
+        actionPanel.add(profileBtn);
+        actionPanel.add(logoutBtn);
+        content.add(actionPanel, g);
 
-    JButton logoutButton = new JButton("Log Out");
-    logoutButton.addActionListener(e -> {
-        Component loginPage = cards.getComponent(0);
-        if (loginPage instanceof JPanel) {
-            resetLoginFields((JPanel) loginPage);
+        // --- Row 4: History Header ---
+        g.gridy = 4;
+        content.add(createSectionHeader("Recent Activity"), g);
+
+        // --- Row 5: History List ---
+        // FIX: This is the ONLY element allowed to take up extra vertical space
+        g.gridy = 5;
+        g.weighty = 1.0;
+        g.fill = GridBagConstraints.BOTH; // Fill remaining space
+
+        JPanel historyList = new JPanel();
+        historyList.setLayout(new BoxLayout(historyList, BoxLayout.Y_AXIS));
+        historyList.setBackground(Style.CARD_BACKGROUD);
+        historyList.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+
+        if (recentTrips == null || recentTrips.isEmpty()) {
+            JLabel empty = new JLabel("No recent trips found.");
+            empty.setFont(Style.FONT_REGULAR);
+            empty.setForeground(Style.TEXT_GRAY);
+            empty.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+            historyList.add(empty);
+        } else {
+            int count = 0;
+            for (int i = recentTrips.size() - 1; i >= 0 && count < 3; i--) {
+                History h = recentTrips.get(i);
+
+                JPanel row = new JPanel(new BorderLayout());
+                row.setBackground(Style.CARD_BACKGROUD);
+                row.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+                // Fix max height for rows
+                row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+
+                JLabel route = new JLabel(h.getPickupLoc() + " \u2192 " + h.getDropoffLoc());
+                route.setFont(Style.FONT_REGULAR);
+                route.setForeground(Style.TEXT_DARK);
+
+                JLabel fare = new JLabel(String.format("$%.2f", h.getFare()));
+                fare.setFont(Style.FONT_LABEL);
+                fare.setForeground(Style.TEXT_GRAY);
+
+                row.add(route, BorderLayout.CENTER);
+                row.add(fare, BorderLayout.EAST);
+
+                historyList.add(row);
+                if (count < 2 && i > 0) {
+                    JSeparator sep = new JSeparator();
+                    sep.setForeground(Style.BORDER_GRAY);
+                    sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+                    historyList.add(sep);
+                }
+                count++;
+            }
         }
-        c1.show(cards, LOGIN);
-    });
 
-    buttonsPanel.add(bookRideButton);
-    buttonsPanel.add(historyButton);
-    buttonsPanel.add(profileButton);
-    buttonsPanel.add(logoutButton);
+        // Spacer to push content to top if list is empty/short
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setBackground(Style.APP_BACKGROUD);
+        wrapper.add(historyList, BorderLayout.NORTH);
 
-    homePanel.add(buttonsPanel, BorderLayout.SOUTH);
+        content.add(wrapper, g);
 
-    return homePanel;
-    
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16); // Faster scrolling
+        homePanel.add(scroll, BorderLayout.CENTER);
+
+        return homePanel;
     }
 
     /**
@@ -705,17 +752,62 @@ public class RideshareApp extends JFrame {
         btn.setBackground(Style.BLUE);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(12,24,12,24));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Adjusted padding
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Remove standard look to allow custom color
+        // FIX: Force a maximum height for the button
+        btn.setPreferredSize(new Dimension(150, 45));
+
         btn.setContentAreaFilled(false);
         btn.setOpaque(true);
     }
 
     /**
-     * Styles a text field with padding and a clean border.
-     * @param tf
+     * Create a metric card with label and value
+     * @param title Small gray title (e.g. "Total")
+     * @param value Large dark value (e.g. "$45.50")
+     * @return A styled Jpanel
+     */
+    private  JPanel createStatCard(String title, String value) {
+        JPanel card = new JPanel(new BorderLayout(10, 5));
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)
+        ));
+
+        // FIX: Force a reasonable height (e.g., 100px) so it doesn't stretch
+        card.setPreferredSize(new Dimension(200, 100));
+
+        JLabel titleL = new JLabel(title.toUpperCase());
+        titleL.setFont(Style.FONT_SMALL);
+        titleL.setForeground(Style.TEXT_GRAY);
+
+        JLabel valueL = new JLabel(value);
+        valueL.setFont(Style.FONT_HEADER);
+        valueL.setForeground(Style.TEXT_DARK);
+
+        card.add(titleL, BorderLayout.NORTH);
+        card.add(valueL, BorderLayout.CENTER);
+        return card;
+    }
+
+    /**
+     * Create a uniform section header label
+     * @param txt The string to apply to the lable
+     * @return
+     */
+    private JLabel createSectionHeader(String txt) {
+        JLabel label = new JLabel(txt);
+        label.setFont(Style.FONT_LABEL);
+        label.setForeground(Style.TEXT_DARK);
+        label.setBorder(BorderFactory.createEmptyBorder(20,0,10,0));
+        return label;
+    }
+
+    /**
+     * Give a clear boders and padding to a TextField
+     * @param tf TextField to be styles
      */
     private void styleTextField(JTextField tf){
         tf.setFont(Style.FONT_REGULAR);

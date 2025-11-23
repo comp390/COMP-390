@@ -10,6 +10,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
+ * AutoCompleteTextField
+ * version 0.1
+ * 10/19/25
  * This Class provide addresses lookup services provided by nominatim
  */
 public class AutoCompleteTextField extends JTextField {
