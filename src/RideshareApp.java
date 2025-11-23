@@ -25,6 +25,7 @@ public class RideshareApp extends JFrame {
     private static final String PROF  = "profile";
     private static final String HIST  = "history";
     private static final String VIEW_PROF = "viewProf";
+    private static final String DRIVER_REQ = "driverRequests";
 
 
     private int currentUserID; // for now keep until correct login is implemented
@@ -60,14 +61,11 @@ public class RideshareApp extends JFrame {
         // build each page, within their own methods (see GeeksforGeeks tutorial, jp1, jp2 ...)
         JPanel loginPage = buildLoginPage();
 
-        //NO NEEDED HERE!!! let's build it after user login, to show user info
-//      JPanel homePage = buildHomePage();
-//      cards.add(homePage, HOME);
-
         JPanel bookPage = buildBookingPage();
         JPanel profPage = buildEditProfilePage();
         JPanel histPage = buildHistoryPage();
         JPanel viewProf = buildProfileOverviewPage();
+        JPanel driverPage = buildDriverRequestsPage();
 
         // add pages to CardLayout with our keys (see GeeksforGeeks tutorial "1", "2" ... cards)
         cards.add(loginPage, LOGIN);
@@ -76,9 +74,9 @@ public class RideshareApp extends JFrame {
         cards.add(profPage, PROF);
         cards.add(histPage, HIST);
         cards.add(viewProf, VIEW_PROF);
+        cards.add(driverPage, DRIVER_REQ);
 
         setContentPane(cards);
-
         c1.show(cards, LOGIN);
 
     }
@@ -226,25 +224,6 @@ public class RideshareApp extends JFrame {
     }
 
     /**
-     * Get the current login username
-     * @return Returns the current user's username
-     * @exception Exception returns a fix value: Commander instead of username.
-     */
-    private String getCurrentUserName(){
-        try {
-            UserDAOSQLite dao = new UserDAOSQLite();
-            Optional<User> opt = dao.findById(currentUserID);
-            if (opt.isPresent()){
-                User u = opt.get();
-                return u.getUsername();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return "Commander";
-    }
-
-    /**
      * Builds the Home page after user logs in
      * @return JPanel for the Home page
      */
@@ -253,43 +232,62 @@ public class RideshareApp extends JFrame {
         JPanel homePanel = new JPanel(new BorderLayout());
         homePanel.setBackground(Style.APP_BACKGROUD);
 
-        // 2. Content Wrapper
         JPanel content = new JPanel(new GridBagLayout());
         content.setBackground(Style.APP_BACKGROUD);
         content.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
-        // --- Logic: Fetch Data (Same as before) ---
+        // --- Logic: Fetch Data based on Role ---
         String userName = getCurrentUserName();
+        String userRole = "rider"; // Default
+
         int totalTrips = 0;
-        double totalSpent = 0.0;
-        String lastRideLoc = "No rides yet";
+        double totalMoney = 0.0; // Spent (Rider) or Earned (Driver)
+        String lastActivity = "No rides yet";
         List<History> recentTrips = null;
 
         try {
+            UserDAOSQLite userDAO = new UserDAOSQLite();
+            Optional<User> uOpt = userDAO.findById(currentUserID);
+            if(uOpt.isPresent()) userRole = uOpt.get().getRole();
+
             HistoryDAO historyDAO = new HistoryDAOSQLite();
-            List<History> userHistory = historyDAO.findUserHistory(currentUserID);
+            List<History> userHistory;
+
+            // Check role to decide which history to pull
+            if ("driver".equalsIgnoreCase(userRole)) {
+                userHistory = historyDAO.findDriverHistory(currentUserID);
+            } else {
+                userHistory = historyDAO.findUserHistory(currentUserID);
+            }
+
             recentTrips = userHistory;
             totalTrips = userHistory.size();
+
             for (History trip : userHistory) {
-                if (trip.getFare() != null) totalSpent += trip.getFare();
+                if (trip.getFare() != null && "completed".equalsIgnoreCase(trip.getStatus())) {
+                    totalMoney += trip.getFare();
+                }
             }
+
             if (!userHistory.isEmpty()) {
-                lastRideLoc = userHistory.get(userHistory.size() - 1).getDropoffLoc();
+                History last = userHistory.get(userHistory.size() - 1);
+                if ("driver".equalsIgnoreCase(userRole)) {
+                    lastActivity = String.format("$%.2f", last.getFare());
+                } else {
+                    lastActivity = last.getDropoffLoc();
+                }
             }
         } catch (Exception ex) {
             System.err.println("Error loading stats: " + ex.getMessage());
         }
 
-        // --- Layout Constraints Setup ---
         GridBagConstraints g = new GridBagConstraints();
         g.insets = new Insets(0, 0, 0, 0);
         g.gridx = 0;
-
-        // FIX: Crucial settings to stop stretching
-        g.anchor = GridBagConstraints.NORTH; // Anchor to top
-        g.fill = GridBagConstraints.HORIZONTAL; // Only stretch width, NOT height
+        g.anchor = GridBagConstraints.NORTH;
+        g.fill = GridBagConstraints.HORIZONTAL;
         g.weightx = 1.0;
-        g.weighty = 0.0; // Do not give vertical space to these rows
+        g.weighty = 0.0;
 
         // --- Row 0: Header ---
         g.gridy = 0;
@@ -302,13 +300,19 @@ public class RideshareApp extends JFrame {
         g.gridy = 1;
         g.insets = new Insets(20, 0, 0, 0);
 
-        // GridLayout with 10px horizontal gap
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 15, 0));
         statsPanel.setBackground(Style.APP_BACKGROUD);
 
-        statsPanel.add(createStatCard("Total Trips", String.valueOf(totalTrips)));
-        statsPanel.add(createStatCard("Total Spent", String.format("$%.2f", totalSpent)));
-        statsPanel.add(createStatCard("Last Drop-off", lastRideLoc));
+        // DYNAMIC CARDS based on Role
+        if ("driver".equalsIgnoreCase(userRole)) {
+            statsPanel.add(createStatCard("Trips Delivered", String.valueOf(totalTrips)));
+            statsPanel.add(createStatCard("Total Earned", String.format("$%.2f", totalMoney)));
+            statsPanel.add(createStatCard("Last Earnings", lastActivity));
+        } else {
+            statsPanel.add(createStatCard("Total Trips", String.valueOf(totalTrips)));
+            statsPanel.add(createStatCard("Total Spent", String.format("$%.2f", totalMoney)));
+            statsPanel.add(createStatCard("Last Drop-off", lastActivity));
+        }
 
         content.add(statsPanel, g);
 
@@ -321,9 +325,25 @@ public class RideshareApp extends JFrame {
         JPanel actionPanel = new JPanel(new GridLayout(1, 3, 15, 0));
         actionPanel.setBackground(Style.APP_BACKGROUD);
 
-        JButton bookBtn = new JButton("Book a Ride");
-        styleButton(bookBtn);
-        bookBtn.setBackground(Style.BLUE);
+        // DYNAMIC BUTTON based on Role
+        JButton mainActionBtn;
+        if ("driver".equalsIgnoreCase(userRole)) {
+            mainActionBtn = new JButton("Find Requests");
+            mainActionBtn.addActionListener(e -> {
+                JPanel reqPage = buildDriverRequestsPage();
+                cards.add(reqPage, DRIVER_REQ);
+                c1.show(cards, DRIVER_REQ);
+            });
+        } else {
+            mainActionBtn = new JButton("Book a Ride");
+            mainActionBtn.addActionListener(e -> {
+                JPanel booking = buildBookingPage();
+                cards.add(booking, BOOK);
+                c1.show(cards, BOOK);
+            });
+        }
+        styleButton(mainActionBtn);
+        mainActionBtn.setBackground(Style.BLUE);
 
         JButton profileBtn = new JButton("My Profile");
         styleButton(profileBtn);
@@ -333,12 +353,6 @@ public class RideshareApp extends JFrame {
         styleButton(logoutBtn);
         logoutBtn.setBackground(Style.ERROR_RED);
 
-        // (Action Listeners kept same)
-        bookBtn.addActionListener(e -> {
-            JPanel booking = buildBookingPage();
-            cards.add(booking, BOOK);
-            c1.show(cards, BOOK);
-        });
         profileBtn.addActionListener(e -> {
             loadUserIntoViewProf();
             c1.show(cards, VIEW_PROF);
@@ -349,7 +363,7 @@ public class RideshareApp extends JFrame {
             c1.show(cards, LOGIN);
         });
 
-        actionPanel.add(bookBtn);
+        actionPanel.add(mainActionBtn);
         actionPanel.add(profileBtn);
         actionPanel.add(logoutBtn);
         content.add(actionPanel, g);
@@ -359,10 +373,9 @@ public class RideshareApp extends JFrame {
         content.add(createSectionHeader("Recent Activity"), g);
 
         // --- Row 5: History List ---
-        // FIX: This is the ONLY element allowed to take up extra vertical space
         g.gridy = 5;
         g.weighty = 1.0;
-        g.fill = GridBagConstraints.BOTH; // Fill remaining space
+        g.fill = GridBagConstraints.BOTH;
 
         JPanel historyList = new JPanel();
         historyList.setLayout(new BoxLayout(historyList, BoxLayout.Y_AXIS));
@@ -383,10 +396,10 @@ public class RideshareApp extends JFrame {
                 JPanel row = new JPanel(new BorderLayout());
                 row.setBackground(Style.CARD_BACKGROUD);
                 row.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-                // Fix max height for rows
                 row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-                JLabel route = new JLabel(h.getPickupLoc() + " \u2192 " + h.getDropoffLoc());
+                String routeText = h.getPickupLoc() + " \u2192 " + h.getDropoffLoc();
+                JLabel route = new JLabel(routeText);
                 route.setFont(Style.FONT_REGULAR);
                 route.setForeground(Style.TEXT_DARK);
 
@@ -408,7 +421,6 @@ public class RideshareApp extends JFrame {
             }
         }
 
-        // Spacer to push content to top if list is empty/short
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(Style.APP_BACKGROUD);
         wrapper.add(historyList, BorderLayout.NORTH);
@@ -417,110 +429,11 @@ public class RideshareApp extends JFrame {
 
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16); // Faster scrolling
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
         homePanel.add(scroll, BorderLayout.CENTER);
 
         return homePanel;
     }
-
-    /**
-     * Call this when opening the Profile page so field are populated from DB
-     */
-    private void loadCurrentUserIntoProfile() {
-        try {
-            UserDAOSQLite userDAO = new UserDAOSQLite();
-            Optional<User> opt = userDAO.findById(currentUserID);
-            if (!opt.isPresent()) {
-                // clear fields or leave placeholders as-is
-                System.err.println("No user found for id=" + currentUserID);
-                return;
-            }
-            User u = opt.get();
-
-            // setText but avoid setting placeholders unintentionally
-            firstNameT.setForeground(Color.BLACK);
-            lastNameT.setForeground(Color.BLACK);
-            emailT.setForeground(Color.BLACK);
-            phoneT.setForeground(Color.BLACK);
-            licenseT.setForeground(Color.BLACK);
-            dobT.setForeground(Color.BLACK);
-            streetT.setForeground(Color.BLACK);
-            cityT.setForeground(Color.BLACK);
-            stateT.setForeground(Color.BLACK);
-            countryT.setForeground(Color.BLACK);
-            zipT.setForeground(Color.BLACK);
-
-            firstNameT.setText(u.getFirstName() == null ? "" : u.getFirstName());
-            lastNameT.setText(u.getLastName() == null ? "" : u.getLastName());
-            emailT.setText(u.getEmail() == null ? "" : u.getEmail());
-            phoneT.setText(u.getPhone() == null ? "" : u.getPhone());
-            licenseT.setText(u.getLicense() == null ? "" : u.getLicense());
-            dobT.setText(u.getDob() == null ? "" : u.getDob());
-            streetT.setText(u.getStreetAddress() == null ? "" : u.getStreetAddress());
-            cityT.setText(u.getCity() == null ? "" : u.getCity());
-            stateT.setText(u.getState() == null ? "" : u.getState());
-            countryT.setText(u.getCountry() == null ? "" : u.getCountry());
-            zipT.setText(u.getZipCode() == null ? "" : u.getZipCode());
-
-        } catch (Exception e) {
-            System.err.println("Error loading profile: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     *  Call this when opening the Profile page so field are populated from DB
-     */
-    private void loadUserIntoViewProf() {
-        try {
-            UserDAOSQLite user = new UserDAOSQLite();
-            Optional<User> opt = user.findById(currentUserID);
-
-            if (!opt.isPresent()) return;
-
-            User curentUser = opt.get();
-
-            profileViewLabels[0].setText(curentUser.getFirstName());
-            profileViewLabels[1].setText(curentUser.getLastName());
-            profileViewLabels[2].setText(curentUser.getEmail());
-            profileViewLabels[3].setText(curentUser.getPhone());
-            profileViewLabels[4].setText(curentUser.getLicense());
-            profileViewLabels[5].setText(curentUser.getDob());
-            profileViewLabels[6].setText(curentUser.getStreetAddress());
-            profileViewLabels[7].setText(curentUser.getCity());
-            profileViewLabels[8].setText(curentUser.getState());
-            profileViewLabels[9].setText(curentUser.getCountry());
-            profileViewLabels[10].setText(curentUser.getZipCode());
-        } catch (Exception e) {
-            System.err.println("Error : " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Helper method to reset login fields on logout
-     * @param panel the JPanel that hold the JTextFields to be reset
-     */
-    private void resetLoginFields(JPanel panel){
-    for (Component comp : panel.getComponents()){
-        if (comp instanceof JTextField && !(comp instanceof JPasswordField)){
-            JTextField field = (JTextField) comp;
-            field.setText("user");
-            field.setForeground(Color.GRAY);
-        } else if (comp instanceof JPasswordField){
-            JPasswordField field = (JPasswordField) comp;
-            field.setText("password");
-            field.setForeground(Color.GRAY);
-        } else if (comp instanceof JButton) {
-            JButton button = (JButton) comp;
-            if (button.getText().equals("Log in!")) {
-                button.setEnabled(false); 
-            }
-        } else if (comp instanceof JPanel){
-            resetLoginFields((JPanel) comp);
-        }
-    }
-}
 
     /**
      *  Builds the book page to displace book trip and cost
@@ -609,10 +522,10 @@ public class RideshareApp extends JFrame {
         backBttn.addActionListener(e -> c1.show(cards, HOME));
 
         viewBttn.addActionListener(e -> {
-        ImageIcon img = new ImageIcon("images/basicTrip.png");
-        JLabel imgL = new JLabel(img);
-        mapHolder.add(imgL, BorderLayout.CENTER);
-        mapHolder.repaint();
+            ImageIcon img = new ImageIcon("images/basicTrip.png");
+            JLabel imgL = new JLabel(img);
+            mapHolder.add(imgL, BorderLayout.CENTER);
+            mapHolder.repaint();
         });
 
         // request botton
@@ -660,8 +573,8 @@ public class RideshareApp extends JFrame {
 
                 JOptionPane.showMessageDialog(this,
                         "Ride has been Requested!\nTrip # "+
-                        newTrip.getHistoryID()+"\nFare: $"+
-                        String.format("%.2f", fare), "Success",
+                                newTrip.getHistoryID()+"\nFare: $"+
+                                String.format("%.2f", fare), "Success",
                         JOptionPane.INFORMATION_MESSAGE);
 
                 // refresh home page by rebuilding it
@@ -671,153 +584,12 @@ public class RideshareApp extends JFrame {
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
                         "Error saving your ride:\n"+
-                        ex.getMessage(), "Database Errror",
+                                ex.getMessage(), "Database Errror",
                         JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
             }
         });
         return p;
-    }
-
-    /**
-     *
-     * @param current
-     * @return
-     */
-    private String getNextStatus(String current){
-        switch (current){
-            case "Requested": return "Accepted";
-            case "Accepted": return "In-Progress";
-            case "In-Progress": return "Completed";
-            default: return "Completed";
-        }
-    }
-
-    /**
-     * Helper to correctly devide the panel for multiple JLables and JTextFields
-     * @param form The JPanel that will be modified
-     * @param gbc The created grids to be places in the JPanel
-     * @param row Integer, The number of rows
-     * @param labelText String, The label for the JTextField
-     * @param field The JTextField to be added
-     * @return Integer, Number of rows + 1 to move to the next row
-     */
-    private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        form.add(new JLabel(labelText), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        form.add(field, gbc);
-
-        return row + 1;
-    }
-
-    /**
-     * A helper (Profile) to set text gray & clear on focus, then restore if empty
-     * @param tf The target JTextField
-     * @param placeHolder String, The display message while not focus
-     */
-    private void textHelper(JTextField tf, String placeHolder){
-        tf.setText(placeHolder);
-        tf.setForeground(Color.GRAY);
-        tf.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent event) {
-                if (tf.getText().equals(placeHolder)){
-                    tf.setText("");
-                    tf.setForeground(Color.BLACK);
-                }
-            }
-            @Override
-            public void focusLost(FocusEvent event){
-                if (tf.getText().isEmpty()){
-                    tf.setForeground(Color.GRAY);
-                    tf.setText(placeHolder);
-                }
-            }
-        });
-    }
-
-    /**
-     * Styles a button to look like a primary action button.
-     * @param btn The button to be modified
-     */
-    private void styleButton(JButton btn){
-        btn.setFont(Style.FONT_LABEL);
-        btn.setBackground(Style.BLUE);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Adjusted padding
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // FIX: Force a maximum height for the button
-        btn.setPreferredSize(new Dimension(150, 45));
-
-        btn.setContentAreaFilled(false);
-        btn.setOpaque(true);
-    }
-
-    /**
-     * Create a metric card with label and value
-     * @param title Small gray title (e.g. "Total")
-     * @param value Large dark value (e.g. "$45.50")
-     * @return A styled Jpanel
-     */
-    private  JPanel createStatCard(String title, String value) {
-        JPanel card = new JPanel(new BorderLayout(10, 5));
-        card.setBackground(Style.CARD_BACKGROUD);
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Style.BORDER_GRAY),
-                BorderFactory.createEmptyBorder(15, 20, 15, 20)
-        ));
-
-        // FIX: Force a reasonable height (e.g., 100px) so it doesn't stretch
-        card.setPreferredSize(new Dimension(200, 100));
-
-        JLabel titleL = new JLabel(title.toUpperCase());
-        titleL.setFont(Style.FONT_SMALL);
-        titleL.setForeground(Style.TEXT_GRAY);
-
-        JLabel valueL = new JLabel(value);
-        valueL.setFont(Style.FONT_HEADER);
-        valueL.setForeground(Style.TEXT_DARK);
-
-        card.add(titleL, BorderLayout.NORTH);
-        card.add(valueL, BorderLayout.CENTER);
-        return card;
-    }
-
-    /**
-     * Create a uniform section header label
-     * @param txt The string to apply to the lable
-     * @return
-     */
-    private JLabel createSectionHeader(String txt) {
-        JLabel label = new JLabel(txt);
-        label.setFont(Style.FONT_LABEL);
-        label.setForeground(Style.TEXT_DARK);
-        label.setBorder(BorderFactory.createEmptyBorder(20,0,10,0));
-        return label;
-    }
-
-    /**
-     * Give a clear boders and padding to a TextField
-     * @param tf TextField to be styles
-     */
-    private void styleTextField(JTextField tf){
-        tf.setFont(Style.FONT_REGULAR);
-        tf.setForeground(Style.TEXT_DARK);
-
-        // line on the outside & padding on inside
-        tf.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Style.BORDER_GRAY, 1),
-                BorderFactory.createEmptyBorder(8,10,8,10)
-        ));
     }
 
     /**
@@ -988,7 +760,7 @@ public class RideshareApp extends JFrame {
                 Optional<User> opt = user.findById(currentUserID);
                 if (!opt.isPresent()){
                     JOptionPane.showMessageDialog(this, "User ID " +currentUserID+ " Not Found!",
-                                "Error", JOptionPane.ERROR_MESSAGE);
+                            "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -1040,6 +812,84 @@ public class RideshareApp extends JFrame {
         buttonPosition.add(saveButton);
         buttonPosition.add(backButton);
         return profilePage;
+    }
+
+    /**
+     * Builds the JPanel History page for displaying privious trips
+     * @return JPanel holding information about the user's past travels
+     */
+    private JPanel buildHistoryPage() {
+        JPanel p = new JPanel(new BorderLayout(10,10));
+
+        JLabel title = new JLabel("<html><h1>History of My Trips</h1></html>");
+        p.add(title, BorderLayout.NORTH);
+
+        //list panels
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+
+        try {
+            HistoryDAO histDao = new HistoryDAOSQLite();
+            List<History> trips = histDao.findUserHistory(currentUserID);
+
+            if (trips.isEmpty()) {
+                listPanel.add(new JLabel("No Previous Trips."));
+            } else {
+                for (History h : trips) {
+                    JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+                    JLabel label = new JLabel(
+                            String.format(
+                                    "Trip #%d  |  %s -> %s  |  $%.2f  |  %s",
+                                    h.getHistoryID(),
+                                    h.getPickupLoc(),
+                                    h.getDropoffLoc(),
+                                    h.getFare(),
+                                    h.getStatus()
+                            )
+                    );
+
+                    JButton updateBttn = new JButton("Next Status");
+                    updateBttn.addActionListener(e -> {
+                        try {
+                            String newStatus = getNextStatus(h.getStatus());
+                            h.setStatus(newStatus);
+
+                            HistoryDAO histDao2 = new HistoryDAOSQLite();
+                            histDao2.update(h);
+
+                            JOptionPane.showMessageDialog(this,
+                                    "Trip status updated to: "+newStatus);
+
+                            JPanel refreshed = buildHistoryPage();
+                            cards.add(refreshed, HIST);
+                            c1.show(cards, HIST);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    });
+
+                    row.add(label);
+                    row.add(updateBttn);
+                    listPanel.add(row);
+                }
+            }
+        } catch (Exception e) {
+            listPanel.add(new JLabel("Error loading your travels history."));
+            e.printStackTrace();
+        }
+
+        JScrollPane scrollP = new JScrollPane(listPanel);
+        p.add(scrollP, BorderLayout.CENTER);
+
+        JButton backButton = new JButton("Back");
+        backButton.addActionListener(e -> c1.show(cards, HOME));
+
+        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        lower.add(backButton);
+        p.add(lower, BorderLayout.SOUTH);
+
+        return p;
     }
 
     /**
@@ -1112,81 +962,400 @@ public class RideshareApp extends JFrame {
     }
 
     /**
-     * Builds the JPanel History page for displaying privious trips
-     * @return JPanel holding information about the user's past travels
+     * Build the page for the Driver
+     * @return the page to be shown
      */
-    private JPanel buildHistoryPage() {
-        JPanel p = new JPanel(new BorderLayout(10,10));
+    private  JPanel buildDriverRequestsPage() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
-        JLabel title = new JLabel("<html><h1>History of My Trips</h1></html>");
-        p.add(title, BorderLayout.NORTH);
+        // header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Style.APP_BACKGROUD);
+        header.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
-        //list panels
+        JLabel title = new JLabel("Open Ride Requests");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        header.add(title, BorderLayout.WEST);
+        p.add(header, BorderLayout.NORTH);
+
+        // content
         JPanel listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(Style.APP_BACKGROUD);
 
         try {
-            HistoryDAO histDao = new HistoryDAOSQLite();
-            List<History> trips = histDao.findUserHistory(currentUserID);
+            HistoryDAO dao = new HistoryDAOSQLite();
+            // 1. fetch open requests
+            List<History> requests = dao.findOpenRequests();
 
-            if (trips.isEmpty()) {
-                listPanel.add(new JLabel("No Previous Trips."));
+            // 2. Get Current Driver's Car ID (Required to accept a ride)
+            CarDAO carDao = new CarDAOSQLite();
+            List<Car> cars = carDao.findAll();
+            int myCarId = -1;
+            for(Car c : cars) {
+                if(c.getUserId() == currentUserID) {
+                    myCarId = c.getCarId();
+                    break;
+                }
+            }
+
+            if (requests.isEmpty()) {
+                JLabel empty = new JLabel("No active requests at the moment.");
+                empty.setFont(Style.FONT_REGULAR);
+                empty.setForeground(Style.TEXT_GRAY);
+                empty.setBorder(BorderFactory.createEmptyBorder(20,40,0,0));
+                listPanel.add(empty);
             } else {
-                for (History h : trips) {
-                    JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-                    JLabel label = new JLabel(
-                            String.format(
-                                "Trip #%d  |  %s -> %s  |  $%.2f  |  %s",
-                                h.getHistoryID(),
-                                h.getPickupLoc(),
-                                h.getDropoffLoc(),
-                                h.getFare(),
-                                h.getStatus()
+                for (History h : requests) {
+                    JPanel card = new JPanel(new BorderLayout());
+                    card.setBackground(Style.CARD_BACKGROUD);
+                    card.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createEmptyBorder(10, 40, 10, 40),
+                            BorderFactory.createCompoundBorder(
+                                    BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                                    BorderFactory.createEmptyBorder(15, 20, 15, 20)
                             )
-                    );
+                    ));
+                    card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
-                    JButton updateBttn = new JButton("Next Status");
-                    updateBttn.addActionListener(e -> {
+                    JPanel routeInfo = new JPanel(new GridLayout(2, 1));
+                    routeInfo.setBackground(Style.CARD_BACKGROUD);
+
+                    JLabel route = new JLabel(h.getPickupLoc() + " \u2192 " + h.getDropoffLoc());
+                    route.setFont(Style.FONT_LABEL);
+
+                    JLabel time = new JLabel("Requested: " + h.getRequestedAt());
+                    time.setFont(Style.FONT_SMALL);
+                    time.setForeground(Style.TEXT_GRAY);
+
+                    routeInfo.add(route);
+                    routeInfo.add(time);
+
+                    // Right: Fare + Accept Button
+                    JPanel action = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+                    action.setBackground(Style.CARD_BACKGROUD);
+
+                    JLabel fare = new JLabel(String.format("$%.2f  ", h.getFare()));
+                    fare.setFont(Style.FONT_HEADER);
+                    fare.setForeground(Style.TEXT_DARK);
+
+                    JButton acceptBtn = new JButton("Accept");
+                    styleButton(acceptBtn);
+                    acceptBtn.setPreferredSize(new Dimension(100, 35));
+
+                    int finalMyCarId = myCarId;
+                    acceptBtn.addActionListener(e -> {
+                        if (finalMyCarId == -1) {
+                            JOptionPane.showMessageDialog(this, "You need a registered car to accept rides!");
+                            return;
+                        }
                         try {
-                            String newStatus = getNextStatus(h.getStatus());
-                            h.setStatus(newStatus);
+                            // Assign Driver (Car) and update Status
+                            h.setCarID(finalMyCarId);
+                            h.setStatus("accepted");
+                            dao.update(h);
 
-                            HistoryDAO histDao2 = new HistoryDAOSQLite();
-                            histDao2.update(h);
+                            JOptionPane.showMessageDialog(this, "Ride Accepted! Head to pickup.");
 
-                            JOptionPane.showMessageDialog(this,
-                                    "Trip status updated to: "+newStatus);
-
-                            JPanel refreshed = buildHistoryPage();
-                            cards.add(refreshed, HIST);
-                            c1.show(cards, HIST);
+                            // Reload page
+                            c1.show(cards, HOME); // Go home or reload requests
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
                     });
 
-                    row.add(label);
-                    row.add(updateBttn);
-                    listPanel.add(row);
+                    action.add(fare);
+                    action.add(acceptBtn);
+
+                    card.add(routeInfo, BorderLayout.CENTER);
+                    card.add(action, BorderLayout.EAST);
+
+                    listPanel.add(card);
+                    listPanel.add(Box.createVerticalStrut(10));
                 }
             }
+
         } catch (Exception e) {
-            listPanel.add(new JLabel("Error loading your travels history."));
             e.printStackTrace();
         }
 
-        JScrollPane scrollP = new JScrollPane(listPanel);
-        p.add(scrollP, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(listPanel);
+        scroll.setBorder(null);
+        p.add(scroll, BorderLayout.CENTER);
 
-        JButton backButton = new JButton("Back");
-        backButton.addActionListener(e -> c1.show(cards, HOME));
-
-        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        lower.add(backButton);
-        p.add(lower, BorderLayout.SOUTH);
+        // Back Button at bottom
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottom.setBackground(Style.APP_BACKGROUD);
+        bottom.setBorder(BorderFactory.createEmptyBorder(10, 40, 20, 40));
+        JButton backBtn = new JButton("Go Back");
+        styleButton(backBtn);
+        backBtn.setBackground(Style.TEXT_GRAY);
+        backBtn.addActionListener(e -> c1.show(cards, HOME));
+        bottom.add(backBtn);
+        p.add(bottom, BorderLayout.SOUTH);
 
         return p;
+    }
+
+    /**
+     * Get the current login username
+     * @return Returns the current user's username
+     * @exception Exception returns a fix value: Commander instead of username.
+     */
+    private String getCurrentUserName(){
+        try {
+            UserDAOSQLite dao = new UserDAOSQLite();
+            Optional<User> opt = dao.findById(currentUserID);
+            if (opt.isPresent()){
+                User u = opt.get();
+                return u.getUsername();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "Commander";
+    }
+
+    /**
+     * Call this when opening the Profile page so field are populated from DB
+     */
+    private void loadCurrentUserIntoProfile() {
+        try {
+            UserDAOSQLite userDAO = new UserDAOSQLite();
+            Optional<User> opt = userDAO.findById(currentUserID);
+            if (!opt.isPresent()) {
+                // clear fields or leave placeholders as-is
+                System.err.println("No user found for id=" + currentUserID);
+                return;
+            }
+            User u = opt.get();
+
+            // setText but avoid setting placeholders unintentionally
+            firstNameT.setForeground(Color.BLACK);
+            lastNameT.setForeground(Color.BLACK);
+            emailT.setForeground(Color.BLACK);
+            phoneT.setForeground(Color.BLACK);
+            licenseT.setForeground(Color.BLACK);
+            dobT.setForeground(Color.BLACK);
+            streetT.setForeground(Color.BLACK);
+            cityT.setForeground(Color.BLACK);
+            stateT.setForeground(Color.BLACK);
+            countryT.setForeground(Color.BLACK);
+            zipT.setForeground(Color.BLACK);
+
+            firstNameT.setText(u.getFirstName() == null ? "" : u.getFirstName());
+            lastNameT.setText(u.getLastName() == null ? "" : u.getLastName());
+            emailT.setText(u.getEmail() == null ? "" : u.getEmail());
+            phoneT.setText(u.getPhone() == null ? "" : u.getPhone());
+            licenseT.setText(u.getLicense() == null ? "" : u.getLicense());
+            dobT.setText(u.getDob() == null ? "" : u.getDob());
+            streetT.setText(u.getStreetAddress() == null ? "" : u.getStreetAddress());
+            cityT.setText(u.getCity() == null ? "" : u.getCity());
+            stateT.setText(u.getState() == null ? "" : u.getState());
+            countryT.setText(u.getCountry() == null ? "" : u.getCountry());
+            zipT.setText(u.getZipCode() == null ? "" : u.getZipCode());
+
+        } catch (Exception e) {
+            System.err.println("Error loading profile: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *  Call this when opening the Profile page so field are populated from DB
+     */
+    private void loadUserIntoViewProf() {
+        try {
+            UserDAOSQLite user = new UserDAOSQLite();
+            Optional<User> opt = user.findById(currentUserID);
+
+            if (!opt.isPresent()) return;
+
+            User curentUser = opt.get();
+
+            profileViewLabels[0].setText(curentUser.getFirstName());
+            profileViewLabels[1].setText(curentUser.getLastName());
+            profileViewLabels[2].setText(curentUser.getEmail());
+            profileViewLabels[3].setText(curentUser.getPhone());
+            profileViewLabels[4].setText(curentUser.getLicense());
+            profileViewLabels[5].setText(curentUser.getDob());
+            profileViewLabels[6].setText(curentUser.getStreetAddress());
+            profileViewLabels[7].setText(curentUser.getCity());
+            profileViewLabels[8].setText(curentUser.getState());
+            profileViewLabels[9].setText(curentUser.getCountry());
+            profileViewLabels[10].setText(curentUser.getZipCode());
+        } catch (Exception e) {
+            System.err.println("Error : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Helper method to reset login fields on logout
+     * @param panel the JPanel that hold the JTextFields to be reset
+     */
+    private void resetLoginFields(JPanel panel){
+    for (Component comp : panel.getComponents()){
+        if (comp instanceof JTextField && !(comp instanceof JPasswordField)){
+            JTextField field = (JTextField) comp;
+            field.setText("user");
+            field.setForeground(Color.GRAY);
+        } else if (comp instanceof JPasswordField){
+            JPasswordField field = (JPasswordField) comp;
+            field.setText("password");
+            field.setForeground(Color.GRAY);
+        } else if (comp instanceof JButton) {
+            JButton button = (JButton) comp;
+            if (button.getText().equals("Log in!")) {
+                button.setEnabled(false); 
+            }
+        } else if (comp instanceof JPanel){
+            resetLoginFields((JPanel) comp);
+        }
+    }
+}
+
+    /**
+     *
+     * @param current
+     * @return
+     */
+    private String getNextStatus(String current){
+        switch (current){
+            case "Requested": return "Accepted";
+            case "Accepted": return "In-Progress";
+            case "In-Progress": return "Completed";
+            default: return "Completed";
+        }
+    }
+
+    /**
+     * Helper to correctly devide the panel for multiple JLables and JTextFields
+     * @param form The JPanel that will be modified
+     * @param gbc The created grids to be places in the JPanel
+     * @param row Integer, The number of rows
+     * @param labelText String, The label for the JTextField
+     * @param field The JTextField to be added
+     * @return Integer, Number of rows + 1 to move to the next row
+     */
+    private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        form.add(new JLabel(labelText), gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        form.add(field, gbc);
+
+        return row + 1;
+    }
+
+    /**
+     * A helper (Profile) to set text gray & clear on focus, then restore if empty
+     * @param tf The target JTextField
+     * @param placeHolder String, The display message while not focus
+     */
+    private void textHelper(JTextField tf, String placeHolder){
+        tf.setText(placeHolder);
+        tf.setForeground(Color.GRAY);
+        tf.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent event) {
+                if (tf.getText().equals(placeHolder)){
+                    tf.setText("");
+                    tf.setForeground(Color.BLACK);
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent event){
+                if (tf.getText().isEmpty()){
+                    tf.setForeground(Color.GRAY);
+                    tf.setText(placeHolder);
+                }
+            }
+        });
+    }
+
+    /**
+     * Styles a button to look like a primary action button.
+     * @param btn The button to be modified
+     */
+    private void styleButton(JButton btn){
+        btn.setFont(Style.FONT_LABEL);
+        btn.setBackground(Style.BLUE);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20)); // Adjusted padding
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // FIX: Force a maximum height for the button
+        btn.setPreferredSize(new Dimension(150, 45));
+
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(true);
+    }
+
+    /**
+     * Create a metric card with label and value
+     * @param title Small gray title (e.g. "Total")
+     * @param value Large dark value (e.g. "$45.50")
+     * @return A styled Jpanel
+     */
+    private  JPanel createStatCard(String title, String value) {
+        JPanel card = new JPanel(new BorderLayout(10, 5));
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(15, 20, 15, 20)
+        ));
+
+        // FIX: Force a reasonable height (e.g., 100px) so it doesn't stretch
+        card.setPreferredSize(new Dimension(200, 100));
+
+        JLabel titleL = new JLabel(title.toUpperCase());
+        titleL.setFont(Style.FONT_SMALL);
+        titleL.setForeground(Style.TEXT_GRAY);
+
+        JLabel valueL = new JLabel(value);
+        valueL.setFont(Style.FONT_HEADER);
+        valueL.setForeground(Style.TEXT_DARK);
+
+        card.add(titleL, BorderLayout.NORTH);
+        card.add(valueL, BorderLayout.CENTER);
+        return card;
+    }
+
+    /**
+     * Create a uniform section header label
+     * @param txt The string to apply to the lable
+     * @return
+     */
+    private JLabel createSectionHeader(String txt) {
+        JLabel label = new JLabel(txt);
+        label.setFont(Style.FONT_LABEL);
+        label.setForeground(Style.TEXT_DARK);
+        label.setBorder(BorderFactory.createEmptyBorder(20,0,10,0));
+        return label;
+    }
+
+    /**
+     * Give a clear boders and padding to a TextField
+     * @param tf TextField to be styles
+     */
+    private void styleTextField(JTextField tf){
+        tf.setFont(Style.FONT_REGULAR);
+        tf.setForeground(Style.TEXT_DARK);
+
+        // line on the outside & padding on inside
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY, 1),
+                BorderFactory.createEmptyBorder(8,10,8,10)
+        ));
     }
 
     /**

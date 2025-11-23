@@ -13,4 +13,6 @@ public interface HistoryDAO {
     List<History> findUserHistory(int carID) throws Exception;
     int update(History d) throws Exception;
     int delete(int tripID) throws Exception;
+    List<History> findDriverHistory(int driverID) throws Exception;
+    List<History> findOpenRequests() throws Exception;
 }

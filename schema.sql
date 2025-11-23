@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    first_name TEXT NOT NULL,
+    first_name TEXT,
     last_name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     phone_no TEXT NOT NULL,
@@ -66,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_trip_payments ON payment(trip_id);
 
 INSERT INTO users (username, password, first_name, last_name, email, phone_no, license_no, dob,
     street_address, city, state, country, zip_code, role, status) VALUES
+('hv', '123', 'Izaiah', 'Wall', 'iza.wall@example.com', '555-222-0001', 'MA0001', '2000-02-11', '1 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
 ('izaiah.w', 'password', 'Izaiah', 'Wall', 'izaiah.wall@example.com', '555-222-0001', 'MA0001', '2000-02-11', '1 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
 ('jayda.c', 'password', 'Jayda', 'Carpenter', 'jayda.carpenter@example.com', '555-222-0002', 'MA0002', '1990-05-21', '2 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
 ('jeremy.c', 'password', 'Jeremy', 'Conner', 'jeremy.conner@example.com', '555-222-0003', 'MA0003', '1994-03-09', '3 Summer St', 'Bridgewater', 'MA', 'USA', '02324', 'driver', 'active'),
@@ -123,6 +124,7 @@ INSERT INTO car (user_id, make, model, year, ext_color, int_color, int_materials
 (8, 'Ford', 'Focus', 2020, 'Gray', 'Black', 'cloth', 20000, 'very good', 'ABC0023'),
 (9, 'Chevrolet', 'Malibu', 2019, 'Blue', 'Black', 'cloth', 15500, 'good', 'ABC0024'),
 (10, 'BMW', 'M3', 2021, 'White', 'Black', 'leather', 24000, 'excellent', 'ABC0025');
+
 
 INSERT INTO history (user_id, car_id, pickup_loc, dropoff_loc, fare_total, status, requested_at) VALUES
 (1, 1, 'Bridgewater', 'Boston', 55.50, 'canceled', '2025-11-01 12:00:00'),

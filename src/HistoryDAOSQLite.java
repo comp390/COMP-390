@@ -197,4 +197,70 @@ public class HistoryDAOSQLite implements HistoryDAO{
             return ps.executeUpdate();
         }
     }
+
+
+    @Override
+    public List<History> findDriverHistory(int driverID) throws Exception {
+        // We join 'history' with 'car' to find trips where this user was the driver
+        String SQL = "SELECT h.*, c.user_id, c.license_plate_no " +
+                "FROM history h " +
+                "JOIN car c ON h.car_id = c.car_id " +
+                "WHERE c.user_id = ? " + // Check the Driver's User ID
+                "ORDER BY h.requested_at DESC";
+
+        try (Connection c = DatabaseManager.get();
+             PreparedStatement ps = c.prepareStatement(SQL)) {
+            ps.setInt(1, driverID);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<History> out = new ArrayList<>();
+                while (rs.next()) {
+                    History h = new History(
+                            rs.getInt("user_id"), // This is the RIDER's ID from history table
+                            rs.getInt("car_id"),
+                            rs.getString("requested_at"),
+                            rs.getString("pickup_loc"),
+                            rs.getString("dropoff_loc"),
+                            rs.getDouble("fare_total"),
+                            rs.getString("status"),
+                            rs.getString("license_plate_no")
+                    );
+                    h.setHistoryID(rs.getInt("trip_id"));
+                    out.add(h);
+                }
+                return out;
+            }
+        }
+    }
+
+    @Override
+    public List<History> findOpenRequests() throws Exception {
+        // Find trips that are strictly 'requested'
+        // Note: We join car to get license plate, though for requested rides it might be generic
+        String SQL = "SELECT h.*, c.license_plate_no " +
+                "FROM history h " +
+                "LEFT JOIN car c ON h.car_id = c.car_id " +
+                "WHERE h.status = 'requested' " +
+                "ORDER BY h.requested_at ASC";
+
+        try (Connection c = DatabaseManager.get();
+             PreparedStatement ps = c.prepareStatement(SQL);
+             ResultSet rs = ps.executeQuery()) {
+            List<History> out = new ArrayList<>();
+            while (rs.next()) {
+                History h = new History(
+                        rs.getInt("user_id"),
+                        rs.getInt("car_id"),
+                        rs.getString("requested_at"),
+                        rs.getString("pickup_loc"),
+                        rs.getString("dropoff_loc"),
+                        rs.getDouble("fare_total"),
+                        rs.getString("status"),
+                        rs.getString("license_plate_no")
+                );
+                h.setHistoryID(rs.getInt("trip_id"));
+                out.add(h);
+            }
+            return out;
+        }
+    }
 }
