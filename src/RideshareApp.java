@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.InsetsUIResource;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -87,142 +88,140 @@ public class RideshareApp extends JFrame {
      * @return the JPanel for the login page
      */
     private JPanel buildLoginPage() {
+        // main Background
         JPanel loginPage = new JPanel(new GridBagLayout());
+        loginPage.setBackground(Style.APP_BACKGROUD);
 
-        JPanel p = new JPanel(new BorderLayout(8,10));
-        //loginPage.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-        p.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200,200,200)),
-                BorderFactory.createEmptyBorder(14,14,14,14)
+        // card
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        // Add subtle border + padding inside the card
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                Style.PADDING_LARGE
         ));
-        p.setBackground(Color.WHITE);
-        p.setPreferredSize(new Dimension(360, 240));
-        JLabel title = new JLabel("Log in");
-        title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
-        title.setHorizontalAlignment(JLabel.CENTER);
-        p.add(title, BorderLayout.NORTH);
 
-        // Constrain the text boxes from being too tall in the PII form
-        JPanel form = new JPanel(new GridBagLayout());
+        // layout card
         GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(8,10,8,10);
-        g.anchor = GridBagConstraints.WEST;
-        g.fill = GridBagConstraints.HORIZONTAL;
+        g.fill = GridBagConstraints.HORIZONTAL; // Make text fields fill the width
+        g.weightx = 1.0; // Give components weight to stretch
+        g.anchor = GridBagConstraints.WEST; // Align text to the left
+        g.gridx = 0; // Everything is in one column
 
-        //username
+        // title "Log in
+        g.gridy = 0;
+        g.insets = new Insets(0, 0, 25, 0); // 25px Bottom Margin (Space before Username)
+        JLabel title = new JLabel("Log in");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        card.add(title, g);
+
+        // username label
+        g.gridy = 1;
+        g.insets = new Insets(0, 0, 5, 0); // 5px Bottom Margin (Close to input)
         JLabel userL = new JLabel("Username");
-        g.gridx = 0; g.gridy = 0; g.weightx =0;
-        form.add(userL, g);
+        userL.setFont(Style.FONT_LABEL);
+        userL.setForeground(Style.TEXT_GRAY);
+        card.add(userL, g);
 
-        JTextField userTF = new JTextField(18);
+        // username input
+        g.gridy = 2;
+        g.insets = new Insets(0, 0, 20, 0); // 20px Bottom Margin (Separation from Password)
+        JTextField userTF = new JTextField(20);
+        styleTextField(userTF);
         textHelper(userTF, "user");
-        g.gridx = 1; g.gridy = 0; g.weightx = 1;
-        form.add(userTF, g);
+        card.add(userTF, g);
 
-        //password
+        // password label
+        g.gridy = 3;
+        g.insets = new Insets(0, 0, 5, 0); // 5px Bottom Margin (Close to input)
         JLabel passL = new JLabel("Password");
-        g.gridx = 0; g.gridy = 1; g.weightx = 0;
-        form.add(passL, g);
+        passL.setFont(Style.FONT_LABEL);
+        passL.setForeground(Style.TEXT_GRAY);
+        card.add(passL, g);
 
-        JPasswordField passPF = new JPasswordField(18);
+        // password input
+        g.gridy = 4;
+        g.insets = new Insets(0, 0, 10, 0); // 10px Bottom Margin (Close to Error/Button)
+        JPasswordField passPF = new JPasswordField(20);
+        styleTextField(passPF);
         textHelper(passPF, "password");
-        g.gridx = 1; g.gridy = 1; g.weightx = 1;
-        form.add(passPF, g);
+        passPF.setEchoChar('●');
+        card.add(passPF, g);
 
-        //error display
+        // error msm
+        g.gridy = 5;
+        g.insets = new Insets(0, 0, 10, 0);
         JLabel error = new JLabel(" ");
-        error.setForeground(Color.RED);
-        g.gridx = 0; g.gridy = 2; g.gridwidth = 2; g.weightx=1;
-        form.add(error, g);
+        error.setFont(Style.FONT_SMALL);
+        error.setForeground(Style.ERROR_RED);
+        card.add(error, g);
 
-        p.add(form, BorderLayout.CENTER);
+        // signin bttn
+        g.gridy = 6;
+        g.insets = new Insets(10, 0, 0, 0); // 10px Top Margin
+        JButton loginButton = new JButton("Sign in");
+        styleButton(loginButton);
+        loginButton.setEnabled(false);
+        loginButton.setBackground(Color.LIGHT_GRAY);
+        card.add(loginButton, g);
 
-        // buttons
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton loginButton = new JButton("Log in!");
-        loginButton.setEnabled(false); // Initially disabled
-        buttons.add(loginButton);
-        p.add(buttons, BorderLayout.SOUTH);
+        loginPage.add(card);
 
         DocumentListener documentListener = new DocumentListener() {
             @Override
-            public void changedUpdate(DocumentEvent documentEvent) {
-                printIt(documentEvent);
-            }
-
+            public void changedUpdate(DocumentEvent e) { updateButton(); }
             @Override
-            public void insertUpdate(DocumentEvent documentEvent) {
-                printIt(documentEvent);
-            }
-
+            public void insertUpdate(DocumentEvent e) { updateButton(); }
             @Override
-            public void removeUpdate(DocumentEvent documentEvent) {
-                printIt(documentEvent);
-            }
-            private void printIt(DocumentEvent documentEvent) {
-                Document source = documentEvent.getDocument();
-                int length = source.getLength();
-                loginButton.setEnabled(length != 0);
+            public void removeUpdate(DocumentEvent e) { updateButton(); }
+
+            private void updateButton() {
+                String user = userTF.getText();
+                String pass = new String(passPF.getPassword());
+                boolean hasUser = !user.isEmpty() && !user.equals("user");
+                boolean hasPass = !pass.isEmpty() && !pass.equals("password");
+                boolean valid = hasUser && hasPass;
+                loginButton.setEnabled(valid);
+                if (valid) {
+                    loginButton.setBackground(Style.BLUE);
+                } else {
+                    loginButton.setBackground(Color.LIGHT_GRAY);
+                }
             }
         };
-
         userTF.getDocument().addDocumentListener(documentListener);
         passPF.getDocument().addDocumentListener(documentListener);
 
         loginButton.addActionListener(e -> {
-
             String username = userTF.getText().trim();
             String password = new String(passPF.getPassword()).trim();
-
             try {
                 UserDAOSQLite userDao = new UserDAOSQLite();
                 List<User> allUsers = userDao.findAll();
-
                 User matched = null;
-
-                //need protection (in-memory as plain text) Big no no!!
                 for (User u : allUsers){
                     if (u.getUsername().equals(username) && u.getPassword().equals(password)) {
                         matched = u;
                         break;
                     }
                 }
-
                 if (matched != null) {
                     error.setText(" ");
-
-                    // This is the key part to track the user ID
-                     currentUserID = matched.getId();
-
-                    // rebuild to display user info if login
+                    currentUserID = matched.getId();
                     JPanel newHome = buildHomePage();
                     cards.add(newHome, HOME);
-
-                    // reload the data for the user
                     loadUserIntoViewProf();
-
                     c1.show(cards, HOME);
-                }else {
+                } else {
                     error.setText("Invalid username or password");
-                    resetLoginFields(loginPage);
                 }
             } catch (Exception ex) {
-                error.setText("User or password not match in database");
+                error.setText("Database connection failed");
                 ex.printStackTrace();
             }
-
-            //
-//            if (userTF.getText().equals("user") &&
-//                    new String(passPF.getPassword()).equals("password")) {
-//                error.setText(" ");
-//                c1.show(cards, HOME);
-//            } else {
-//                error.setText("Invalid username or password");
-//            }
         });
 
-
-        loginPage.add(p, new GridBagConstraints());
         return loginPage;
     }
 
@@ -695,6 +694,38 @@ public class RideshareApp extends JFrame {
                 }
             }
         });
+    }
+
+    /**
+     * Styles a button to look like a primary action button.
+     * @param btn The button to be modified
+     */
+    private void styleButton(JButton btn){
+        btn.setFont(Style.FONT_LABEL);
+        btn.setBackground(Style.BLUE);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(12,24,12,24));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Remove standard look to allow custom color
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(true);
+    }
+
+    /**
+     * Styles a text field with padding and a clean border.
+     * @param tf
+     */
+    private void styleTextField(JTextField tf){
+        tf.setFont(Style.FONT_REGULAR);
+        tf.setForeground(Style.TEXT_DARK);
+
+        // line on the outside & padding on inside
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY, 1),
+                BorderFactory.createEmptyBorder(8,10,8,10)
+        ));
     }
 
     /**
