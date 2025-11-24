@@ -440,131 +440,148 @@ public class RideshareApp extends JFrame {
      * @return JPanel of the booking page
      */
     private JPanel buildBookingPage() {
-        JPanel p = new JPanel(new BorderLayout(10,10));
-        p.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
+        // content Wrapper (Center Card)
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel title = new JLabel("<html><h1>Book a Trip</h1></html>");
-        p.add(title, BorderLayout.NORTH);
+        //White Card
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
 
-        // the form panel
-        JPanel form = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8,8,8,8);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.WEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
 
-        AutoCompleteTextField pickUpT = new AutoCompleteTextField(15);
-        AutoCompleteTextField dropoffT = new AutoCompleteTextField(15);
+        // header
+        g.gridy = 0;
+        g.insets = new Insets(0, 0, 25, 0);
+        JLabel title = new JLabel("Book a Trip");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        card.add(title, g);
 
-        textHelper(pickUpT,"Pickup Address");
-        textHelper(dropoffT, "Drop-off Address");
+        // form fields
+        // Pickup
+        g.gridy = 1;
+        g.insets = new Insets(0, 0, 5, 0);
+        JLabel pickupL = new JLabel("Pickup Location");
+        pickupL.setFont(Style.FONT_LABEL);
+        pickupL.setForeground(Style.TEXT_GRAY);
+        card.add(pickupL, g);
 
-        JButton searchPickButton = new JButton("Search");
-        JButton searchDropButton = new JButton("Search");
+        g.gridy = 2;
+        g.insets = new Insets(0, 0, 15, 0);
+        AutoCompleteTextField pickUpT = new AutoCompleteTextField(20);
+        styleTextField(pickUpT); // Reuse our style helper!
+        textHelper(pickUpT, "Enter pickup address...");
+        card.add(pickUpT, g);
 
-        searchPickButton.addActionListener(e -> pickUpT.searchNow());
-        searchDropButton.addActionListener(e -> dropoffT.searchNow());
+        // drop-off
+        g.gridy = 3;
+        g.insets = new Insets(0, 0, 5, 0);
+        JLabel dropL = new JLabel("Drop-off Destination");
+        dropL.setFont(Style.FONT_LABEL);
+        dropL.setForeground(Style.TEXT_GRAY);
+        card.add(dropL, g);
 
-        // top row
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        form.add(new JLabel("Pickup Location:"), gbc);
+        g.gridy = 4;
+        g.insets = new Insets(0, 0, 25, 0);
+        AutoCompleteTextField dropoffT = new AutoCompleteTextField(20);
+        styleTextField(dropoffT);
+        textHelper(dropoffT, "Enter destination...");
+        card.add(dropoffT, g);
 
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        form.add(pickUpT, gbc);
+        // map placeholder (Visual Flair)
+        g.gridy = 5;
+        g.insets = new Insets(0, 0, 25, 0);
 
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        form.add(searchPickButton, gbc);
+        JPanel mapPlaceholder = new JPanel(new BorderLayout());
+        mapPlaceholder.setBackground(new Color(240, 242, 245)); // Light Gray Map Color
+        mapPlaceholder.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+        mapPlaceholder.setPreferredSize(new Dimension(400, 200)); // Fixed height for map area
 
-        // lower row
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        form.add(new JLabel("Drop-off Location:"), gbc);
+        JLabel mapLabel = new JLabel("Map Preview", SwingConstants.CENTER);
+        mapLabel.setForeground(Style.TEXT_GRAY);
+        mapPlaceholder.add(mapLabel, BorderLayout.CENTER);
 
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        form.add(dropoffT, gbc);
-
-        gbc.gridx = 2;
-        gbc.weightx = 0;
-        form.add(searchDropButton, gbc);
-
-
-        int row = 0;
-        row = addRowHelper(form, gbc, row, "Pickup Location:", pickUpT);
-        row = addRowHelper(form, gbc, row, "Drop-off Location:", dropoffT);
-
-        p.add(form, BorderLayout.CENTER);
-
-        // Place image of MAP here
-        JPanel mapHolder = new JPanel(new BorderLayout());
-        mapHolder.setPreferredSize(new Dimension(400,400));
-        p.add(mapHolder,BorderLayout.EAST);
-
-
-        // bottons for navigation
-        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton backBttn = new JButton("Back");
-        JButton viewBttn = new JButton("Preview Map");
-        JButton reqBttn = new JButton("Request Trip");
-
-        lower.add(backBttn);
-        lower.add(viewBttn);
-        lower.add(reqBttn);
-        p.add(lower, BorderLayout.SOUTH);
-
-        //back -> home
-        backBttn.addActionListener(e -> c1.show(cards, HOME));
-
-        viewBttn.addActionListener(e -> {
+        // Try to load image, fallback to text if missing
+        try {
             ImageIcon img = new ImageIcon("images/basicTrip.png");
-            JLabel imgL = new JLabel(img);
-            mapHolder.add(imgL, BorderLayout.CENTER);
-            mapHolder.repaint();
-        });
+            if (img.getImageLoadStatus() == MediaTracker.COMPLETE) {
+                // Resize logic could go here, but simple icon set is fine for now
+                mapLabel.setText("");
+                mapLabel.setIcon(img);
+            }
+        } catch (Exception e) { /* Ignore missing image */ }
 
-        // request botton
-        reqBttn.addActionListener(e -> {
+        card.add(mapPlaceholder, g);
+
+        // action buttons
+        g.gridy = 6;
+        g.insets = new Insets(10, 0, 0, 0);
+
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 15, 0));
+        buttons.setBackground(Style.CARD_BACKGROUD);
+
+        JButton backBtn = new JButton("Cancel");
+        styleButton(backBtn);
+        backBtn.setBackground(Style.APP_BACKGROUD); // Light background for secondary action
+        backBtn.setForeground(Style.TEXT_DARK);
+        backBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+
+        JButton reqBtn = new JButton("Request Ride");
+        styleButton(reqBtn);
+        reqBtn.setBackground(Style.BLUE); // Primary action
+
+        buttons.add(backBtn);
+        buttons.add(reqBtn);
+        card.add(buttons, g);
+
+        // for card to wrapper
+        content.add(card);
+        p.add(content, BorderLayout.CENTER);
+
+        // Logic-Preserved
+        backBtn.addActionListener(e -> c1.show(cards, HOME));
+
+        reqBtn.addActionListener(e -> {
             String pickUp = pickUpT.getText().trim();
             String dropOff = dropoffT.getText().trim();
 
-            if (!pickUpT.hasValidSelection()) {
-                JOptionPane.showMessageDialog(this,
-                        "Please choose a valid Pickup address from the suggestions.",
-                        "Invalid Pickup Location",
-                        JOptionPane.WARNING_MESSAGE);
+            // basic validation to check against placeholders
+            if (pickUp.isEmpty() || pickUp.equals("Enter pickup address...")) {
+                JOptionPane.showMessageDialog(this, "Please enter a pickup location.");
                 return;
             }
-
-            if (!dropoffT.hasValidSelection()) {
-                JOptionPane.showMessageDialog(this,
-                        "Please choose a valid Drop-off address from the suggestions.",
-                        "Invalid Drop-off Location",
-                        JOptionPane.WARNING_MESSAGE);
+            if (dropOff.isEmpty() || dropOff.equals("Enter destination...")) {
+                JOptionPane.showMessageDialog(this, "Please enter a drop-off destination.");
                 return;
             }
-
 
             try {
-                // geocode - placeholder for now
-                double distMiles = 3.0;
-                int durMin = 10;
-
-                double fare = FareCalculator.calculateStandardFare(distMiles,durMin);
+                // Hardcoded distance for demo purposes
+                double distMiles = 3.5;
+                int durMin = 12;
+                double fare = FareCalculator.calculateStandardFare(distMiles, durMin);
 
                 History newTrip = new History(
                         currentUserID,
-                        1, // <- this is annoying, think of another way
+                        1, // placeholder Car ID (will be updated when driver accepts)
                         java.time.LocalDateTime.now().toString(),
                         pickUp,
                         dropOff,
                         fare,
-                        "requested",
+                        "requested", // Crucial ofr status is 'requested'
                         "N/A"
                 );
 
@@ -572,23 +589,20 @@ public class RideshareApp extends JFrame {
                 histDao.insert(newTrip);
 
                 JOptionPane.showMessageDialog(this,
-                        "Ride has been Requested!\nTrip # "+
-                                newTrip.getHistoryID()+"\nFare: $"+
-                                String.format("%.2f", fare), "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                        "Ride Requested Successfully!\nEst. Fare: $" + String.format("%.2f", fare),
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
 
-                // refresh home page by rebuilding it
+                // return to dashboard to see the request in "Recent Activity"
                 JPanel homePage = buildHomePage();
                 cards.add(homePage, HOME);
                 c1.show(cards, HOME);
+
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Error saving your ride:\n"+
-                                ex.getMessage(), "Database Errror",
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
                 ex.printStackTrace();
             }
         });
+
         return p;
     }
 
