@@ -123,17 +123,20 @@ public class HistoryDAOSQLite implements HistoryDAO{
      */
     @Override
     public List<History> findUserHistory(int userID) throws Exception {
-        // SQL query statement for easy usage and maintenance
-        String SELECT_ALL_DRIVER_HISTORY_SQL = "SELECT h.*, c.user_id, c.license_plate_no " +
-                "FROM history h JOIN car c ON h.car_id = c.car_id " +
-                "WHERE c.user_id = ?";
+        // Corrected SQL: Selects based on the RIDER'S ID (h.user_id)
+        // Uses LEFT JOIN so requested rides (which might have placeholder cars) still show up
+        String SELECT_RIDER_HISTORY_SQL = "SELECT h.*, c.license_plate_no " +
+                "FROM history h " +
+                "LEFT JOIN car c ON h.car_id = c.car_id " +
+                "WHERE h.user_id = ? " +
+                "ORDER BY h.requested_at DESC";
+
         try(Connection c = DatabaseManager.get();
-            PreparedStatement ps = c.prepareStatement(SELECT_ALL_DRIVER_HISTORY_SQL)) {
+            PreparedStatement ps = c.prepareStatement(SELECT_RIDER_HISTORY_SQL)) {
 
             ps.setInt(1, userID);
             try(ResultSet rs = ps.executeQuery()) {
                 List<History> out = new ArrayList<>();
-                // Loop through all rows in result set (each row = 1 trip)
                 while(rs.next()){
                     History h = new History(
                             rs.getInt("user_id"),
@@ -202,10 +205,10 @@ public class HistoryDAOSQLite implements HistoryDAO{
     @Override
     public List<History> findDriverHistory(int driverID) throws Exception {
         // We join 'history' with 'car' to find trips where this user was the driver
-        String SQL = "SELECT h.*, c.user_id, c.license_plate_no " +
+        String SQL = "SELECT h.*, c.license_plate_no " +
                 "FROM history h " +
                 "JOIN car c ON h.car_id = c.car_id " +
-                "WHERE c.user_id = ? " + // Check the Driver's User ID
+                "WHERE c.user_id = ? " +
                 "ORDER BY h.requested_at DESC";
 
         try (Connection c = DatabaseManager.get();
@@ -215,7 +218,7 @@ public class HistoryDAOSQLite implements HistoryDAO{
                 List<History> out = new ArrayList<>();
                 while (rs.next()) {
                     History h = new History(
-                            rs.getInt("user_id"), // This is the RIDER's ID from history table
+                            rs.getInt("user_id"),
                             rs.getInt("car_id"),
                             rs.getString("requested_at"),
                             rs.getString("pickup_loc"),

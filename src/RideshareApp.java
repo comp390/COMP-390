@@ -55,7 +55,7 @@ public class RideshareApp extends JFrame {
         setTitle("Rideshare App"); // should we come up with a fun name?
                                    // ^ Yes! I think we can do better!
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(800, 500);
+        setSize(1400, 800);
         setLocationRelativeTo(null);
 
         // build each page, within their own methods (see GeeksforGeeks tutorial, jp1, jp2 ...)
@@ -228,7 +228,6 @@ public class RideshareApp extends JFrame {
      * @return JPanel for the Home page
      */
     private JPanel buildHomePage() {
-        // Main container background
         JPanel homePanel = new JPanel(new BorderLayout());
         homePanel.setBackground(Style.APP_BACKGROUD);
 
@@ -236,12 +235,12 @@ public class RideshareApp extends JFrame {
         content.setBackground(Style.APP_BACKGROUD);
         content.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
-        // --- Logic: Fetch Data based on Role ---
+        // get data based on role
         String userName = getCurrentUserName();
-        String userRole = "rider"; // Default
+        String userRole = "rider"; // default
 
         int totalTrips = 0;
-        double totalMoney = 0.0; // Spent (Rider) or Earned (Driver)
+        double totalMoney = 0.0;
         String lastActivity = "No rides yet";
         List<History> recentTrips = null;
 
@@ -253,7 +252,6 @@ public class RideshareApp extends JFrame {
             HistoryDAO historyDAO = new HistoryDAOSQLite();
             List<History> userHistory;
 
-            // Check role to decide which history to pull
             if ("driver".equalsIgnoreCase(userRole)) {
                 userHistory = historyDAO.findDriverHistory(currentUserID);
             } else {
@@ -262,6 +260,7 @@ public class RideshareApp extends JFrame {
 
             recentTrips = userHistory;
             totalTrips = userHistory.size();
+            totalMoney = 0.0;
 
             for (History trip : userHistory) {
                 if (trip.getFare() != null && "completed".equalsIgnoreCase(trip.getStatus())) {
@@ -270,7 +269,8 @@ public class RideshareApp extends JFrame {
             }
 
             if (!userHistory.isEmpty()) {
-                History last = userHistory.get(userHistory.size() - 1);
+
+                History last = userHistory.get(0);
                 if ("driver".equalsIgnoreCase(userRole)) {
                     lastActivity = String.format("$%.2f", last.getFare());
                 } else {
@@ -289,21 +289,19 @@ public class RideshareApp extends JFrame {
         g.weightx = 1.0;
         g.weighty = 0.0;
 
-        // --- Row 0: Header ---
+        // header
         g.gridy = 0;
         JLabel welcome = new JLabel("Welcome back, " + userName);
         welcome.setFont(Style.FONT_HEADER);
         welcome.setForeground(Style.TEXT_DARK);
         content.add(welcome, g);
 
-        // --- Row 1: Stats Grid ---
+        // stats grid
         g.gridy = 1;
         g.insets = new Insets(20, 0, 0, 0);
-
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 15, 0));
         statsPanel.setBackground(Style.APP_BACKGROUD);
 
-        // DYNAMIC CARDS based on Role
         if ("driver".equalsIgnoreCase(userRole)) {
             statsPanel.add(createStatCard("Trips Delivered", String.valueOf(totalTrips)));
             statsPanel.add(createStatCard("Total Earned", String.format("$%.2f", totalMoney)));
@@ -313,19 +311,17 @@ public class RideshareApp extends JFrame {
             statsPanel.add(createStatCard("Total Spent", String.format("$%.2f", totalMoney)));
             statsPanel.add(createStatCard("Last Drop-off", lastActivity));
         }
-
         content.add(statsPanel, g);
 
-        // --- Row 2: Section Header ---
+        // section eader
         g.gridy = 2;
         content.add(createSectionHeader("Quick Actions"), g);
 
-        // --- Row 3: Action Buttons ---
+        // action bttn
         g.gridy = 3;
         JPanel actionPanel = new JPanel(new GridLayout(1, 3, 15, 0));
         actionPanel.setBackground(Style.APP_BACKGROUD);
 
-        // DYNAMIC BUTTON based on Role
         JButton mainActionBtn;
         if ("driver".equalsIgnoreCase(userRole)) {
             mainActionBtn = new JButton("Find Requests");
@@ -368,11 +364,35 @@ public class RideshareApp extends JFrame {
         actionPanel.add(logoutBtn);
         content.add(actionPanel, g);
 
-        // --- Row 4: History Header ---
+        // history header with view all bttn
         g.gridy = 4;
-        content.add(createSectionHeader("Recent Activity"), g);
 
-        // --- Row 5: History List ---
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Style.APP_BACKGROUD);
+
+        headerPanel.add(createSectionHeader("Recent Activity"), BorderLayout.CENTER);
+
+        // create the small "View All" button
+        JButton viewAllBtn = new JButton("View All History");
+        viewAllBtn.setFont(new Font("SansSerif", Font.BOLD, 12));
+        viewAllBtn.setForeground(Style.BLUE);
+        viewAllBtn.setContentAreaFilled(false);
+        viewAllBtn.setBorderPainted(false);
+        viewAllBtn.setFocusPainted(false);
+        viewAllBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        viewAllBtn.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+
+        // rebuild history page
+        viewAllBtn.addActionListener(e -> {
+            JPanel histPage = buildHistoryPage();
+            cards.add(histPage, HIST);
+            c1.show(cards, HIST);
+        });
+
+        headerPanel.add(viewAllBtn, BorderLayout.EAST);
+        content.add(headerPanel, g);
+
+        // history list
         g.gridy = 5;
         g.weighty = 1.0;
         g.fill = GridBagConstraints.BOTH;
@@ -611,175 +631,185 @@ public class RideshareApp extends JFrame {
      * @return JPanel profile page containing current user info
      */
     private JPanel buildEditProfilePage() {
-        // needed to count rows in the grid
-        int prow = 0;
-        int adrow = 0;
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
-        // Outer Border page to help with simetry
-        JPanel profilePage = new JPanel(new BorderLayout(8,8));
-        profilePage.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        // content wrapper
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Constrain the text boxes from being too tall in the PII form
-        JPanel gridPii = new JPanel(new GridBagLayout());
-        gridPii.setBorder(BorderFactory.createTitledBorder("Personal Information"));
-        GridBagConstraints gbc1 = new GridBagConstraints();
-        gbc1.insets = new Insets(4,7,4,6);
-        gbc1.anchor = GridBagConstraints.WEST;
-        gbc1.fill = GridBagConstraints.HORIZONTAL;
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
 
-        // better title
-        JLabel title = new JLabel("<html><h1>Profile</h1></html>");
-        profilePage.add(title, BorderLayout.NORTH);
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.WEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
+        g.gridy = 0;
 
-        // Using the instance variable from the field area
-        firstNameT =  new JTextField();
-        firstNameT.setColumns(20);
-        textHelper(firstNameT, "Ride");
-        prow = addRowHelper(gridPii, gbc1, prow,"First Name:", firstNameT);
+        // title
+        g.insets = new Insets(0, 0, 20, 0);
+        JLabel title = new JLabel("Edit Profile");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        card.add(title, g);
 
-        lastNameT =  new JTextField();
-        lastNameT.setColumns(20);
-        textHelper(lastNameT, "Share");
-        prow = addRowHelper(gridPii, gbc1, prow,"Last Name:", lastNameT);
+        // personal info section
+        g.gridy++;
+        card.add(createSectionHeader("Personal Information"), g);
 
-        emailT = new JTextField();
-        emailT.setColumns(11);
-        textHelper(emailT, "rideshare@bridgew.com");
-        prow = addRowHelper(gridPii,gbc1,prow, "Email:",emailT);
+        // Initialize Fields (Reusing class variables)
+        firstNameT = new JTextField(); styleTextField(firstNameT);
+        lastNameT = new JTextField(); styleTextField(lastNameT);
+        emailT = new JTextField(); styleTextField(emailT);
+        phoneT = new JTextField(); styleTextField(phoneT);
+        licenseT = new JTextField(); styleTextField(licenseT);
+        dobT = new JTextField(); styleTextField(dobT);
 
-        phoneT = new JTextField();
-        phoneT.setColumns(11);
-        textHelper(phoneT, "###-###-####");
-        prow = addRowHelper(gridPii, gbc1, prow, "Phone Number:", phoneT);
+        addEditField(card, g, "First Name", firstNameT);
+        addEditField(card, g, "Last Name", lastNameT);
+        addEditField(card, g, "Email", emailT);
+        addEditField(card, g, "Phone", phoneT);
+        addEditField(card, g, "License Plate", licenseT);
+        addEditField(card, g, "Date of Birth (YYYY-MM-DD)", dobT);
 
-        licenseT = new JTextField();
-        licenseT.setColumns(11);
-        textHelper(licenseT, "ABC-123");
-        prow = addRowHelper(gridPii, gbc1, prow, "License Plate:", licenseT);
+        // address section
+        g.gridy++;
+        g.insets = new Insets(20, 0, 0, 0);
+        card.add(createSectionHeader("Address Details"), g);
 
-        dobT = new JTextField();
-        dobT.setColumns(11);
-        textHelper(dobT, "YYYY-MM-DD");
-        prow = addRowHelper(gridPii, gbc1, prow, "Date of Birth:", dobT);
+        streetT = new JTextField(); styleTextField(streetT);
+        cityT = new JTextField(); styleTextField(cityT);
+        stateT = new JTextField(); styleTextField(stateT);
+        countryT = new JTextField(); styleTextField(countryT);
+        zipT = new JTextField(); styleTextField(zipT);
 
+        addEditField(card, g, "Street Address", streetT);
+        addEditField(card, g, "City", cityT);
 
-        JPanel gridAddr = new JPanel(new GridBagLayout());
-        gridAddr.setBorder(BorderFactory.createTitledBorder("Address"));
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.insets = new Insets(4,6,4,6);
-        gbc2.anchor = GridBagConstraints.WEST;
-        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        JPanel splitRow = new JPanel(new GridLayout(1, 2, 15, 0));
+        splitRow.setBackground(Style.CARD_BACKGROUD);
 
-        // keep using the instance fiels
-        streetT = new JTextField();
-        streetT.setColumns(15);
-        textHelper(streetT, "123 Plymouth St");
-        adrow = addRowHelper(gridAddr, gbc2, adrow, "Street:", streetT);
+        JPanel stateP = new JPanel(new BorderLayout(0,5));
+        stateP.setBackground(Style.CARD_BACKGROUD);
+        stateP.add(new JLabel("State"), BorderLayout.NORTH);
+        stateP.add(stateT, BorderLayout.CENTER);
 
-        cityT = new JTextField();
-        cityT.setColumns(11);
-        textHelper(cityT, "Bridgewater");
-        adrow = addRowHelper(gridAddr, gbc2, adrow, "City:", cityT);
+        JPanel zipP = new JPanel(new BorderLayout(0,5));
+        zipP.setBackground(Style.CARD_BACKGROUD);
+        zipP.add(new JLabel("Zip Code"), BorderLayout.NORTH);
+        zipP.add(zipT, BorderLayout.CENTER);
 
-        stateT = new JTextField();
-        stateT.setColumns(9);
-        textHelper(stateT, "MA");
-        adrow = addRowHelper(gridAddr, gbc2, adrow, "State:", stateT);
+        splitRow.add(stateP);
+        splitRow.add(zipP);
 
-        countryT = new JTextField();
-        countryT.setColumns(8);
-        textHelper(countryT, "USA");
-        adrow = addRowHelper(gridAddr, gbc2, adrow, "Country:", countryT);
+        g.gridy++;
+        g.insets = new Insets(15, 0, 0, 0);
+        card.add(splitRow, g);
 
-        zipT = new JTextField();
-        zipT.setColumns(8);
-        textHelper(zipT, "#####");
-        adrow = addRowHelper(gridAddr, gbc2, adrow, "ZIP Code:", zipT);
+        addEditField(card, g, "Country", countryT);
 
-        // add Panel and addrPanel to center side-by-side
-        JPanel center = new JPanel(new GridLayout(1,2,0,0)); // <===
-        center.add(gridPii);
-        center.add(gridAddr);
+        g.gridy++;
+        g.insets = new Insets(30, 0, 0, 0);
+        card.add(createSectionHeader("Payment Methods"), g);
 
-        // add 1x3 grid below the two forms and above Save bottom
-        JPanel paymentRow = new JPanel(new GridBagLayout());
-        GridBagConstraints payGBC = new GridBagConstraints();
+        // 1. Credit Card
+        JTextField ccNum = new JTextField(); styleTextField(ccNum); textHelper(ccNum, "0000 0000 0000 0000");
+        JTextField ccExp = new JTextField(); styleTextField(ccExp); textHelper(ccExp, "MM/YY");
+        JTextField ccCvc = new JTextField(); styleTextField(ccCvc); textHelper(ccCvc, "CVC");
 
-        payGBC.insets = new Insets(2,6,2,6);
-        payGBC.anchor = GridBagConstraints.WEST;
-        payGBC.fill = GridBagConstraints.NONE;
+        addEditField(card, g, "Card Number", ccNum);
 
-        // Label
-        payGBC.gridx = 0;
-        payGBC.weightx = 0;
-        paymentRow.add(new JLabel("Credit/Debit Card"), payGBC);
+        // Split row for Exp/CVC
+        JPanel ccSplit = new JPanel(new GridLayout(1, 2, 15, 0));
+        ccSplit.setBackground(Style.CARD_BACKGROUD);
 
-        // Text box
-        payGBC.gridx = 1;
-        payGBC.weightx = 0.1;
-        payGBC.fill = GridBagConstraints.HORIZONTAL;
-        JTextField cardNumT = new JTextField(10);
-        textHelper(cardNumT, "**** **** **** ****");
-        paymentRow.add(cardNumT, payGBC);
+        JPanel expP = new JPanel(new BorderLayout(0,5));
+        expP.setBackground(Style.CARD_BACKGROUD);
+        expP.add(new JLabel("Expiration"), BorderLayout.NORTH);
+        expP.add(ccExp, BorderLayout.CENTER);
 
+        JPanel cvcP = new JPanel(new BorderLayout(0,5));
+        cvcP.setBackground(Style.CARD_BACKGROUD);
+        cvcP.add(new JLabel("CVC"), BorderLayout.NORTH);
+        cvcP.add(ccCvc, BorderLayout.CENTER);
 
-        payGBC.gridx = 2;
-        payGBC.weightx = 0;
-        payGBC.fill = GridBagConstraints.NONE;
-        paymentRow.add(Box.createHorizontalStrut(8), payGBC);
+        ccSplit.add(expP);
+        ccSplit.add(cvcP);
 
-        // Label
-        payGBC.gridx = 3;
-        payGBC.weightx = 0;
-        paymentRow.add(new JLabel("Exp. Date"), payGBC);
+        g.gridy++;
+        g.insets = new Insets(15, 0, 0, 0);
+        card.add(ccSplit, g);
 
-        // Text box
-        payGBC.gridx = 4;
-        payGBC.weightx = 0.15;
-        payGBC.fill = GridBagConstraints.HORIZONTAL;
-        JTextField expDateT = new JTextField(6);
-        textHelper(expDateT, "MM-YY");
-        paymentRow.add(expDateT, payGBC);
+        // 2. Digital Wallet
+        g.gridy++;
+        g.insets = new Insets(15, 0, 5, 0);
+        JLabel walletL = new JLabel("Digital Wallets");
+        walletL.setFont(Style.FONT_LABEL);
+        walletL.setForeground(Style.TEXT_GRAY);
+        card.add(walletL, g);
 
-        // Label
-        payGBC.gridx = 5;
-        payGBC.weightx = 0;
-        payGBC.fill = GridBagConstraints.NONE;
-        paymentRow.add(new JLabel("CVV"), payGBC);
+        g.gridy++;
+        g.insets = new Insets(0, 0, 0, 0);
 
+        JButton paypalBtn = new JButton("Connect PayPal / Google Pay");
+        styleButton(paypalBtn);
+        paypalBtn.setBackground(new Color(255, 196, 57)); // PayPal Gold-ish color
+        paypalBtn.setForeground(Style.TEXT_DARK);
+        paypalBtn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        payGBC.gridx = 6;
-        payGBC.weightx = 0.05;
-        payGBC.fill = GridBagConstraints.HORIZONTAL;
-        JTextField cvvNumT = new JTextField(4);
-        textHelper(cvvNumT, "###");
-        paymentRow.add(cvvNumT, payGBC);
+        paypalBtn.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "Redirecting to Digital Wallet provider...");
+        });
+        card.add(paypalBtn, g);
 
-        // need wrapper so the grid sit below the forms
-        JPanel centerWrapper = new JPanel();
-        centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
-        centerWrapper.add(center);
-        centerWrapper.add(Box.createRigidArea(new Dimension(0,8)));
-        centerWrapper.add(paymentRow);
-        profilePage.add(centerWrapper, BorderLayout.CENTER);
+        // actions bttn
+        g.gridy++;
+        g.insets = new Insets(30, 0, 0, 0);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.setBackground(Style.CARD_BACKGROUD);
 
+        JButton cancelBtn = new JButton("Cancel");
+        styleButton(cancelBtn);
+        cancelBtn.setBackground(Style.APP_BACKGROUD);
+        cancelBtn.setForeground(Style.TEXT_DARK);
+        cancelBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
 
-        // buttons
-        JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(event -> {
+        JButton saveBtn = new JButton("Save Changes");
+        styleButton(saveBtn);
+        saveBtn.setBackground(Style.BLUE);
+
+        buttons.add(cancelBtn);
+        buttons.add(saveBtn);
+        card.add(buttons, g);
+
+        content.add(card);
+
+        // wrap in ScrollPane because this form is tall!
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        p.add(scroll, BorderLayout.CENTER);
+
+        // listeners
+        cancelBtn.addActionListener(e -> {
+            loadUserIntoViewProf();
+            c1.show(cards, VIEW_PROF);
+        });
+
+        saveBtn.addActionListener(event -> {
             UserDAOSQLite user = new UserDAOSQLite();
-
             try {
-                //load existing user
                 Optional<User> opt = user.findById(currentUserID);
-                if (!opt.isPresent()){
-                    JOptionPane.showMessageDialog(this, "User ID " +currentUserID+ " Not Found!",
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+                if (!opt.isPresent()) return;
 
                 User currentUser = opt.get();
-
                 currentUser.setFirstName(firstNameT.getText().trim());
                 currentUser.setLastName(lastNameT.getText().trim());
                 currentUser.setEmail(emailT.getText().trim());
@@ -794,38 +824,34 @@ public class RideshareApp extends JFrame {
 
                 int rows = user.update(currentUser);
                 if (rows > 0){
-                    JOptionPane.showMessageDialog(this,"Profile updated!",
-                            "Success",JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Profile updated successfully!");
+                    loadUserIntoViewProf();
+                    c1.show(cards, VIEW_PROF);
                 } else {
-                    JOptionPane.showMessageDialog(this,"Changes were not saved.",
-                            "Attention",JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Failed to save changes.");
                 }
-
-                loadUserIntoViewProf();
-                // Go to the home card
-                c1.show(cards, VIEW_PROF);
-
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error saving "+
-                        e.getMessage(),"Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
             }
         });
 
-        // set bottom to the lower-right of the frame
-        JPanel buttonPosition = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        profilePage.add(buttonPosition, BorderLayout.SOUTH);
+        return p;
+    }
 
-        JButton backButton = new JButton("Back");
-        backButton.addActionListener(e ->{
-            loadCurrentUserIntoProfile();
-            loadUserIntoViewProf();
-            c1.show(cards, VIEW_PROF);
-        });
+    /**
+     * Helper to add a label + input pair to the Edit form.
+     */
+    private void addEditField(JPanel p, GridBagConstraints g, String label, JTextField field) {
+        g.gridy++;
+        g.insets = new Insets(15, 0, 5, 0); // Spacing above label
+        JLabel l = new JLabel(label);
+        l.setFont(Style.FONT_LABEL);
+        l.setForeground(Style.TEXT_GRAY);
+        p.add(l, g);
 
-
-        buttonPosition.add(saveButton);
-        buttonPosition.add(backButton);
-        return profilePage;
+        g.gridy++;
+        g.insets = new Insets(0, 0, 0, 0); // No spacing between label and input
+        p.add(field, g);
     }
 
     /**
@@ -833,75 +859,144 @@ public class RideshareApp extends JFrame {
      * @return JPanel holding information about the user's past travels
      */
     private JPanel buildHistoryPage() {
-        JPanel p = new JPanel(new BorderLayout(10,10));
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
-        JLabel title = new JLabel("<html><h1>History of My Trips</h1></html>");
-        p.add(title, BorderLayout.NORTH);
+        // Header
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Style.APP_BACKGROUD);
+        header.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
-        //list panels
+        JLabel title = new JLabel("Trip History");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        header.add(title, BorderLayout.WEST);
+        p.add(header, BorderLayout.NORTH);
+
+        // List Container
         JPanel listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setBackground(Style.APP_BACKGROUD);
+
+        // Add top spacing
+        listPanel.add(Box.createVerticalStrut(10));
 
         try {
+            UserDAOSQLite userDAO = new UserDAOSQLite();
+            Optional<User> uOpt = userDAO.findById(currentUserID);
+            String role = uOpt.isPresent() ? uOpt.get().getRole() : "rider";
+
             HistoryDAO histDao = new HistoryDAOSQLite();
-            List<History> trips = histDao.findUserHistory(currentUserID);
+            List<History> trips;
+
+            // Fetch correct history based on role
+            if ("driver".equalsIgnoreCase(role)) {
+                trips = histDao.findDriverHistory(currentUserID);
+            } else {
+                trips = histDao.findUserHistory(currentUserID);
+            }
 
             if (trips.isEmpty()) {
-                listPanel.add(new JLabel("No Previous Trips."));
+                JLabel empty = new JLabel("No trip history found.");
+                empty.setFont(Style.FONT_REGULAR);
+                empty.setForeground(Style.TEXT_GRAY);
+                empty.setBorder(BorderFactory.createEmptyBorder(0, 40, 0, 0));
+                listPanel.add(empty);
             } else {
                 for (History h : trips) {
-                    JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT));
-
-                    JLabel label = new JLabel(
-                            String.format(
-                                    "Trip #%d  |  %s -> %s  |  $%.2f  |  %s",
-                                    h.getHistoryID(),
-                                    h.getPickupLoc(),
-                                    h.getDropoffLoc(),
-                                    h.getFare(),
-                                    h.getStatus()
+                    // Card Container
+                    JPanel card = new JPanel(new BorderLayout());
+                    card.setBackground(Style.CARD_BACKGROUD);
+                    card.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createEmptyBorder(5, 40, 5, 40), // Outer margin
+                            BorderFactory.createCompoundBorder(
+                                    BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                                    BorderFactory.createEmptyBorder(15, 20, 15, 20) // Inner padding
                             )
-                    );
+                    ));
+                    card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
 
-                    JButton updateBttn = new JButton("Next Status");
-                    updateBttn.addActionListener(e -> {
-                        try {
-                            String newStatus = getNextStatus(h.getStatus());
-                            h.setStatus(newStatus);
+                    // Left: Route & Date
+                    JPanel infoP = new JPanel(new GridLayout(2, 1, 0, 5));
+                    infoP.setBackground(Style.CARD_BACKGROUD);
 
-                            HistoryDAO histDao2 = new HistoryDAOSQLite();
-                            histDao2.update(h);
+                    JLabel route = new JLabel(h.getPickupLoc() + " \u2192 " + h.getDropoffLoc());
+                    route.setFont(Style.FONT_LABEL);
+                    route.setForeground(Style.TEXT_DARK);
 
-                            JOptionPane.showMessageDialog(this,
-                                    "Trip status updated to: "+newStatus);
+                    JLabel date = new JLabel("Requested: " + h.getRequestedAt());
+                    date.setFont(Style.FONT_SMALL);
+                    date.setForeground(Style.TEXT_GRAY);
 
-                            JPanel refreshed = buildHistoryPage();
-                            cards.add(refreshed, HIST);
-                            c1.show(cards, HIST);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    });
+                    infoP.add(route);
+                    infoP.add(date);
 
-                    row.add(label);
-                    row.add(updateBttn);
-                    listPanel.add(row);
+                    // Right: Fare, Status, Button
+                    JPanel statusP = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
+                    statusP.setBackground(Style.CARD_BACKGROUD);
+
+                    JLabel fare = new JLabel(String.format("$%.2f", h.getFare()));
+                    fare.setFont(Style.FONT_HEADER);
+                    fare.setForeground(Style.TEXT_DARK);
+
+                    // Status Badge
+                    JLabel badge = createStatusBadge(h.getStatus());
+
+                    // "Next Status" Button (Simulation Logic)
+                    // Only show if trip is active (not completed/canceled)
+                    String s = h.getStatus().toLowerCase();
+                    if (!s.equals("completed") && !s.equals("canceled") && !s.equals("refunded")) {
+                        JButton actionBtn = new JButton("Advance Status");
+                        actionBtn.setFont(new Font("SansSerif", Font.PLAIN, 11));
+                        actionBtn.setBackground(Style.APP_BACKGROUD);
+                        actionBtn.setFocusPainted(false);
+                        actionBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+                        actionBtn.setPreferredSize(new Dimension(100, 25));
+
+                        actionBtn.addActionListener(e -> {
+                            try {
+                                String next = getNextStatus(h.getStatus());
+                                h.setStatus(next);
+                                histDao.update(h);
+
+                                // Refresh page
+                                JPanel refresh = buildHistoryPage();
+                                cards.add(refresh, HIST);
+                                c1.show(cards, HIST);
+                            } catch (Exception ex) { ex.printStackTrace(); }
+                        });
+                        statusP.add(actionBtn);
+                    }
+
+                    statusP.add(badge);
+                    statusP.add(fare);
+
+                    card.add(infoP, BorderLayout.CENTER);
+                    card.add(statusP, BorderLayout.EAST);
+
+                    listPanel.add(card);
+                    listPanel.add(Box.createVerticalStrut(10));
                 }
             }
         } catch (Exception e) {
-            listPanel.add(new JLabel("Error loading your travels history."));
             e.printStackTrace();
         }
 
-        JScrollPane scrollP = new JScrollPane(listPanel);
-        p.add(scrollP, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(listPanel);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        p.add(scroll, BorderLayout.CENTER);
 
-        JButton backButton = new JButton("Back");
-        backButton.addActionListener(e -> c1.show(cards, HOME));
-
-        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        lower.add(backButton);
-        p.add(lower, BorderLayout.SOUTH);
+        // Footer Back Button
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottom.setBackground(Style.APP_BACKGROUD);
+        bottom.setBorder(BorderFactory.createEmptyBorder(10, 40, 20, 40));
+        JButton backBtn = new JButton("Go Back");
+        styleButton(backBtn);
+        backBtn.setBackground(Style.TEXT_GRAY);
+        backBtn.addActionListener(e -> c1.show(cards, HOME));
+        bottom.add(backBtn);
+        p.add(bottom, BorderLayout.SOUTH);
 
         return p;
     }
@@ -911,68 +1006,117 @@ public class RideshareApp extends JFrame {
      * @return JPanel profile page containing current user info
      */
     private JPanel buildProfileOverviewPage() {
-        JPanel p = new JPanel(new BorderLayout(10,10));
-        p.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-        JLabel title = new JLabel("<html><h1>My Profile<h1></html>");
-        p.add(title, BorderLayout.NORTH);
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
-        // pairs of panels
-        JPanel info = new JPanel(new GridLayout(0,2,10,10));
-        JLabel firstNameL = new JLabel();
-        JLabel lastNameL = new JLabel();
-        JLabel emailL = new JLabel();
-        JLabel phoneL = new JLabel();
-        JLabel licenseL = new JLabel();
-        JLabel dobL = new JLabel();
-        JLabel streetL = new JLabel();
-        JLabel cityL = new JLabel();
-        JLabel stateL = new JLabel();
-        JLabel countryL = new JLabel();
-        JLabel zipL = new JLabel();
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
 
-        // store it to update
-        this.profileViewLabels = new JLabel[]{
-                firstNameL, lastNameL, emailL, phoneL,
-                licenseL, dobL, streetL, cityL,stateL,
-                countryL, zipL
-        };
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
 
-        // add to pannel
-        info.add(new JLabel("First Name:")); info.add(firstNameL);
-        info.add(new JLabel("Last Name:")); info.add(lastNameL);
-        info.add(new JLabel("Email:")); info.add(emailL);
-        info.add(new JLabel("Phone:")); info.add(phoneL);
-        info.add(new JLabel("License Plate:")); info.add(licenseL);
-        info.add(new JLabel("DoB:")); info.add(dobL);
-        info.add(new JLabel("Street:")); info.add(streetL);
-        info.add(new JLabel("City:")); info.add(cityL);
-        info.add(new JLabel("State:")); info.add(stateL);
-        info.add(new JLabel("Country:")); info.add(countryL);
-        info.add(new JLabel("ZIP Code:")); info.add(zipL);
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.NORTHWEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
 
-        p.add(info, BorderLayout.CENTER);
+        // header
+        g.gridy = 0;
+        g.gridwidth = 2;
+        g.insets = new Insets(0, 0, 25, 0);
 
-        JButton editButton = new JButton("Edit Profile");
-        editButton.addActionListener(e -> {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Style.CARD_BACKGROUD);
 
-            //loadUserIntoProfileView();
+        JLabel title = new JLabel("My Profile");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+
+        JButton editBtn = new JButton("Edit Profile");
+        styleButton(editBtn);
+        editBtn.setPreferredSize(new Dimension(120, 35));
+        editBtn.setBackground(Style.TEXT_DARK);
+
+        header.add(title, BorderLayout.WEST);
+        header.add(editBtn, BorderLayout.EAST);
+        card.add(header, g);
+
+        // data
+        g.gridwidth = 1;
+        g.gridy = 1;
+
+        profileViewLabels = new JLabel[11];
+
+        addProfileField(card, g, 0, "First Name", 0);
+        addProfileField(card, g, 1, "Last Name", 1);
+
+        g.gridy++;
+        addProfileField(card, g, 0, "Email", 2);
+        addProfileField(card, g, 1, "Phone", 3);
+
+        g.gridy++;
+        addProfileField(card, g, 0, "License Plate", 4);
+        addProfileField(card, g, 1, "Date of Birth", 5);
+
+        // address section
+        g.gridy++;
+        g.gridwidth = 2;
+        // FIX: Explicitly force anchor to WEST (Left) so it doesn't float
+        g.anchor = GridBagConstraints.WEST;
+        g.fill = GridBagConstraints.NONE; // Don't stretch, just sit on the left
+        g.insets = new Insets(20, 0, 15, 0);
+
+        JLabel addrHeader = new JLabel("Address Information");
+        addrHeader.setFont(Style.FONT_LABEL);
+        addrHeader.setForeground(Style.BLUE);
+        card.add(addrHeader, g);
+
+        // reset constraints for fields
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.NORTHWEST;
+        g.gridwidth = 1;
+        g.gridy++;
+        g.insets = new Insets(0, 0, 15, 0);
+
+        addProfileField(card, g, 0, "Street", 6);
+        addProfileField(card, g, 1, "City", 7);
+
+        g.gridy++;
+        addProfileField(card, g, 0, "State", 8);
+        addProfileField(card, g, 1, "Zip Code", 10);
+
+        g.gridy++;
+        addProfileField(card, g, 0, "Country", 9);
+
+        // bttn
+        g.gridy++;
+        g.gridwidth = 2;
+        g.insets = new Insets(30, 0, 0, 0);
+        g.fill = GridBagConstraints.HORIZONTAL;
+
+        JButton backBtn = new JButton("Go Back");
+        styleButton(backBtn);
+        backBtn.setBackground(Style.APP_BACKGROUD);
+        backBtn.setForeground(Style.TEXT_DARK);
+        backBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+        card.add(backBtn, g);
+
+        content.add(card);
+        p.add(new JScrollPane(content), BorderLayout.CENTER);
+
+        editBtn.addActionListener(e -> {
             loadCurrentUserIntoProfile();
             c1.show(cards, PROF);
         });
+        backBtn.addActionListener(e -> c1.show(cards, HOME));
 
-        JPanel lower = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-
-        JButton backB = new JButton("Back");
-        backB.addActionListener(e -> {
-
-            c1.show(cards, HOME);
-        });
-
-        lower.add(backB);
-        lower.add(editButton);
-
-        p.add(lower, BorderLayout.SOUTH);
-        return  p;
+        return p;
     }
 
     /**
@@ -1047,7 +1191,7 @@ public class RideshareApp extends JFrame {
                     routeInfo.add(route);
                     routeInfo.add(time);
 
-                    // Right: Fare + Accept Button
+                    //Fare + Accept Button
                     JPanel action = new JPanel(new FlowLayout(FlowLayout.RIGHT));
                     action.setBackground(Style.CARD_BACKGROUD);
 
@@ -1066,7 +1210,7 @@ public class RideshareApp extends JFrame {
                             return;
                         }
                         try {
-                            // Assign Driver (Car) and update Status
+                            // Assign Driver (Car)
                             h.setCarID(finalMyCarId);
                             h.setStatus("accepted");
                             dao.update(h);
@@ -1074,7 +1218,7 @@ public class RideshareApp extends JFrame {
                             JOptionPane.showMessageDialog(this, "Ride Accepted! Head to pickup.");
 
                             // Reload page
-                            c1.show(cards, HOME); // Go home or reload requests
+                            c1.show(cards, HOME);
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }
@@ -1111,6 +1255,39 @@ public class RideshareApp extends JFrame {
         p.add(bottom, BorderLayout.SOUTH);
 
         return p;
+    }
+
+    /**
+     * Creates a colored "Pill" badge for trip status.
+     */
+    private JLabel createStatusBadge(String status) {
+        JLabel badge = new JLabel(status.toUpperCase());
+        badge.setFont(new Font("SansSerif", Font.BOLD, 10));
+        badge.setOpaque(true);
+        badge.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        badge.setHorizontalAlignment(SwingConstants.CENTER);
+
+        // color based for status
+        switch (status.toLowerCase()) {
+            case "completed":
+                badge.setBackground(new Color(232, 245, 233)); // light green
+                badge.setForeground(new Color(46, 125, 50));   // dark green
+                break;
+            case "canceled":
+            case "refunded":
+                badge.setBackground(new Color(255, 235, 238)); // light red
+                badge.setForeground(new Color(198, 40, 40));   // dark red
+                break;
+            case "accepted":
+            case "enroute":
+                badge.setBackground(new Color(227, 242, 253)); // light blue
+                badge.setForeground(new Color(21, 101, 192));  // dark blue
+                break;
+            default: // "requested", etc.
+                badge.setBackground(new Color(255, 248, 225)); // light yellow
+                badge.setForeground(new Color(245, 127, 23));  // dark orange
+        }
+        return badge;
     }
 
     /**
@@ -1237,36 +1414,14 @@ public class RideshareApp extends JFrame {
      * @return
      */
     private String getNextStatus(String current){
-        switch (current){
-            case "Requested": return "Accepted";
-            case "Accepted": return "In-Progress";
-            case "In-Progress": return "Completed";
-            default: return "Completed";
+        if (current == null) return "Completed";
+
+        switch (current.toLowerCase()) {
+            case "requested": return "accepted";
+            case "accepted": return "enroute";
+            case "enroute": return "completed";
+            default: return "completed";
         }
-    }
-
-    /**
-     * Helper to correctly devide the panel for multiple JLables and JTextFields
-     * @param form The JPanel that will be modified
-     * @param gbc The created grids to be places in the JPanel
-     * @param row Integer, The number of rows
-     * @param labelText String, The label for the JTextField
-     * @param field The JTextField to be added
-     * @return Integer, Number of rows + 1 to move to the next row
-     */
-    private int addRowHelper(JPanel form, GridBagConstraints gbc, int row, String labelText, JTextField field) {
-        gbc.gridx = 0;
-        gbc.gridy = row;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        form.add(new JLabel(labelText), gbc);
-
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        form.add(field, gbc);
-
-        return row + 1;
     }
 
     /**
@@ -1312,6 +1467,38 @@ public class RideshareApp extends JFrame {
 
         btn.setContentAreaFilled(false);
         btn.setOpaque(true);
+    }
+
+    /**
+     * Helper to add a read-only field to the profile card.
+     * @param p Panel
+     * @param g GridBagConstraints
+     * @param col Column (0 or 1)
+     * @param label Title
+     * @param index Index in the profileViewLabels array
+     */
+    private void addProfileField(JPanel p, GridBagConstraints g, int col, String label, int index) {
+        g.gridx = col;
+        // right padding for col 0, Left padding for col 1
+        g.insets = (col == 0) ? new Insets(0, 0, 15, 20) : new Insets(0, 20, 15, 0);
+        g.weightx = 0.5;
+
+        JPanel field = new JPanel(new BorderLayout(0, 5));
+        field.setBackground(Style.CARD_BACKGROUD);
+
+        JLabel l = new JLabel(label);
+        l.setFont(Style.FONT_SMALL);
+        l.setForeground(Style.TEXT_GRAY);
+
+        JLabel v = new JLabel("Loading...");
+        v.setFont(Style.FONT_REGULAR);
+        v.setForeground(Style.TEXT_DARK);
+
+        profileViewLabels[index] = v; // store
+
+        field.add(l, BorderLayout.NORTH);
+        field.add(v, BorderLayout.CENTER);
+        p.add(field, g);
     }
 
     /**
