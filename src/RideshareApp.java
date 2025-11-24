@@ -26,6 +26,7 @@ public class RideshareApp extends JFrame {
     private static final String HIST  = "history";
     private static final String VIEW_PROF = "viewProf";
     private static final String DRIVER_REQ = "driverRequests";
+    private static final String SIGNUP = "signup";
 
 
     private int currentUserID; // for now keep until correct login is implemented
@@ -66,6 +67,7 @@ public class RideshareApp extends JFrame {
         JPanel histPage = buildHistoryPage();
         JPanel viewProf = buildProfileOverviewPage();
         JPanel driverPage = buildDriverRequestsPage();
+        JPanel signUpPage = buildSignUpPage();
 
         // add pages to CardLayout with our keys (see GeeksforGeeks tutorial "1", "2" ... cards)
         cards.add(loginPage, LOGIN);
@@ -75,6 +77,7 @@ public class RideshareApp extends JFrame {
         cards.add(histPage, HIST);
         cards.add(viewProf, VIEW_PROF);
         cards.add(driverPage, DRIVER_REQ);
+        cards.add(signUpPage, SIGNUP);
 
         setContentPane(cards);
         c1.show(cards, LOGIN);
@@ -164,6 +167,29 @@ public class RideshareApp extends JFrame {
         loginButton.setBackground(Color.LIGHT_GRAY);
         card.add(loginButton, g);
 
+        g.gridy = 7;
+        g.insets = new Insets(0, 0, 0, 0);
+
+        JPanel signUpLink = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        signUpLink.setBackground(Style.CARD_BACKGROUD);
+
+        JLabel noAcc = new JLabel("Don't have an account?");
+        noAcc.setFont(Style.FONT_SMALL);
+        noAcc.setForeground(Style.TEXT_GRAY);
+
+        JButton signUpBtn = new JButton("Sign up");
+        signUpBtn.setFont(Style.FONT_LABEL);
+        signUpBtn.setForeground(Style.BLUE);
+        signUpBtn.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
+        signUpBtn.setContentAreaFilled(false);
+        signUpBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        signUpBtn.addActionListener(e -> c1.show(cards, SIGNUP)); // Go to Sign Up
+
+        signUpLink.add(noAcc);
+        signUpLink.add(signUpBtn);
+        card.add(signUpLink, g);
+
         loginPage.add(card);
 
         DocumentListener documentListener = new DocumentListener() {
@@ -221,6 +247,158 @@ public class RideshareApp extends JFrame {
         });
 
         return loginPage;
+    }
+
+    /**
+     * Builds the Sign-Up page for new users.
+     * @return JPanel for the sign-up page
+     */
+    private JPanel buildSignUpPage() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
+
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
+
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.WEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
+        g.gridy = 0;
+
+        // --- Header ---
+        g.insets = new Insets(0, 0, 25, 0);
+        JLabel title = new JLabel("Create your account");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        card.add(title, g);
+
+        // --- Fields ---
+        // Helper to keep code clean
+        JTextField userT = new JTextField(); styleTextField(userT);
+        JPasswordField passT = new JPasswordField(); styleTextField(passT);
+        JTextField firstT = new JTextField(); styleTextField(firstT);
+        JTextField lastT = new JTextField(); styleTextField(lastT);
+        JTextField emailT = new JTextField(); styleTextField(emailT);
+        JTextField phoneT = new JTextField(); styleTextField(phoneT);
+
+        // Role Selection
+        String[] roles = {"Rider", "Driver"};
+        JComboBox<String> roleCombo = new JComboBox<>(roles);
+        roleCombo.setBackground(Color.WHITE);
+        roleCombo.setFont(Style.FONT_REGULAR);
+
+        addEditField(card, g, "Username", userT);
+        addEditField(card, g, "Password", passT);
+        addEditField(card, g, "First Name", firstT);
+        addEditField(card, g, "Last Name", lastT);
+        addEditField(card, g, "Email", emailT);
+        addEditField(card, g, "Phone Number", phoneT);
+
+        // Role UI
+        g.gridy++;
+        g.insets = new Insets(15, 0, 5, 0);
+        JLabel roleL = new JLabel("I want to be a...");
+        roleL.setFont(Style.FONT_LABEL);
+        roleL.setForeground(Style.TEXT_GRAY);
+        card.add(roleL, g);
+
+        g.gridy++;
+        g.insets = new Insets(0, 0, 0, 0);
+        card.add(roleCombo, g);
+
+        // --- Actions ---
+        g.gridy++;
+        g.insets = new Insets(30, 0, 0, 0);
+
+        JButton signUpBtn = new JButton("Create Account");
+        styleButton(signUpBtn);
+        signUpBtn.setBackground(Style.BLUE);
+
+        JButton cancelBtn = new JButton("Cancel");
+        styleButton(cancelBtn);
+        cancelBtn.setBackground(Style.APP_BACKGROUD);
+        cancelBtn.setForeground(Style.TEXT_DARK);
+        cancelBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+
+        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 0));
+        buttons.setBackground(Style.CARD_BACKGROUD);
+        buttons.add(cancelBtn);
+        buttons.add(signUpBtn);
+
+        card.add(buttons, g);
+
+        // Wrap in scroll pane
+        content.add(card);
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        p.add(scroll, BorderLayout.CENTER);
+
+        // --- Logic ---
+        cancelBtn.addActionListener(e -> c1.show(cards, LOGIN));
+
+        signUpBtn.addActionListener(e -> {
+            String u = userT.getText().trim();
+            String pwd = new String(passT.getPassword()).trim();
+            String f = firstT.getText().trim();
+            String l = lastT.getText().trim();
+            String em = emailT.getText().trim();
+            String ph = phoneT.getText().trim();
+            String role = ((String) roleCombo.getSelectedItem()).toLowerCase();
+
+            // Basic Validation
+            if (u.isEmpty() || pwd.isEmpty() || l.isEmpty() || em.isEmpty() || ph.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please fill in all required fields.\n(Username, Password, Last Name, Email, Phone)");
+                return;
+            }
+
+            try {
+                UserDAOSQLite dao = new UserDAOSQLite();
+
+                // Check if user exists (Optional but good)
+                // For now, we rely on the DB throwing a Unique Constraint error if email/user is taken
+
+                // Create User Object
+                // We fill optional fields with empty strings to satisfy the constructor/DB
+                User newUser = new User(
+                        u, pwd, f, l, em, ph,
+                        "", // License (Optional)
+                        "", // DOB (Optional)
+                        "", // Street
+                        "", // City
+                        "", // State
+                        "", // Country
+                        "", // Zip
+                        role,
+                        "active" // Status
+                );
+
+                dao.insert(newUser);
+
+                JOptionPane.showMessageDialog(this, "Account Created! Please Log In.");
+                c1.show(cards, LOGIN);
+
+            } catch (Exception ex) {
+                // Handle duplicate username/email errors
+                if (ex.getMessage().contains("UNIQUE constraint failed")) {
+                    JOptionPane.showMessageDialog(this, "Username or Email already taken.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error creating account: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+        });
+
+        return p;
     }
 
     /**
