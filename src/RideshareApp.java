@@ -518,7 +518,7 @@ public class RideshareApp extends JFrame {
             });
         }
         styleButton(mainActionBtn);
-        mainActionBtn.setBackground(Style.BLUE);
+        mainActionBtn.setBackground(Style.GREEN);
 
         JButton profileBtn = new JButton("My Profile");
         styleButton(profileBtn);
@@ -526,7 +526,7 @@ public class RideshareApp extends JFrame {
 
         JButton logoutBtn = new JButton("Log Out");
         styleButton(logoutBtn);
-        logoutBtn.setBackground(Style.ERROR_RED);
+        logoutBtn.setBackground(Style.DARK_GRAY);
 
         profileBtn.addActionListener(e -> {
             loadUserIntoViewProf();
@@ -740,7 +740,7 @@ public class RideshareApp extends JFrame {
 
         JButton reqBtn = new JButton("Request Ride");
         styleButton(reqBtn);
-        reqBtn.setBackground(Style.BLUE); // Primary action
+        reqBtn.setBackground(Style.GREEN); // Primary action
 
         buttons.add(backBtn);
         buttons.add(reqBtn);
@@ -766,7 +766,6 @@ public class RideshareApp extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter a drop-off destination.");
                 return;
             }
-s
             try {
                 // Hardcoded distance for demo purposes
                 Random random = new Random();

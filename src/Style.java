@@ -19,8 +19,13 @@ public class Style {
     //darker color for text
     public static final Color TEXT_DARK = new Color(50,50,93);
 
+    //Green
+    public static final Color GREEN = new Color(92,175,90);
+
     // lighter color
-    public static final Color TEXT_GRAY = new Color(107,124,147);
+    public static final Color TEXT_GRAY = new Color(95,95,147);
+
+    public static final Color DARK_GRAY = new Color(128,128,150);
 
     // light color for border
     public static final  Color BORDER_GRAY = new Color(225,225,230);
