@@ -11,6 +11,7 @@ import java.sql.*;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * This is the main app that builds the gui and create instances
@@ -768,7 +769,8 @@ public class RideshareApp extends JFrame {
 
             try {
                 // Hardcoded distance for demo purposes
-                double distMiles = 3.5;
+                Random random = new Random();
+                double distMiles = random.nextInt(50);
                 int durMin = 12;
                 double fare = FareCalculator.calculateStandardFare(distMiles, durMin);
 
