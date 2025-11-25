@@ -766,7 +766,7 @@ public class RideshareApp extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter a drop-off destination.");
                 return;
             }
-
+s
             try {
                 // Hardcoded distance for demo purposes
                 Random random = new Random();

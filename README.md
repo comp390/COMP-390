@@ -89,13 +89,9 @@
 
 ## Phase 3 – Structural Modeling (Class Diagrams & Data Design)
 
-<summary><b>📊 Class diagram</b></summary>
+<summary><b>📊 Class diagram / Attribute Tables</b></summary>
 
-![Class Diagram](images/class_diagram.png)  
-
-<summary><b>📊 Attribute Tables</b></summary>
-
-![Attribute Tables](images/attribute_tables.png)
+![Class Diagram](images/class_diagram.png)
 
 <summary><b>🧱 Database Schema</b></summary>
 
@@ -144,8 +140,12 @@
 <summary><b>🖼️ UI Mockups / Screenshots</b></summary>
 
 ![UI Login Mockup](images/ui_mockup_login.png)
-![UI Homepage Mockup](images/ui_mockup_home.png)
+![UI Homepage Mockup](images/ui_mockup_driver_home.png)
+![UI Homepage Mockup](images/ui_mockup_rider_home.png)
 ![UI Profile Mockup](images/ui_mockup_profile.png)
+![UI Booking Mockup](images/ui_mockup_book.png)
+![UI Booking Successful Mockup](images/ui_mockup_book_successful.png)
+![UI Find Ride Mockup](images/ui_mockup_driver_findride.png)
 
 ---
 
