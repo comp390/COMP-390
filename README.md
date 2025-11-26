@@ -158,6 +158,59 @@ Before running the project, make sure you have:
 - A compatible **IDE** such as IntelliJ IDEA  
 - `sqlite-jdbc.jar` added to your project’s `/lib` folder  
 
+### 📁 Project Structure
+
+.
+│   .gitignore
+│   README.md
+│   rideshare.db 
+│   schema.sql
+│    
+└───src
+│   AutoCompleteTextField.java
+│   Car.java
+│   CarDAO.java
+│   CarDAOSQLite.java
+│   COMP-390.iml
+│   DatabaseManager.java
+│   FareCalculator.java
+│   History.java
+│   HistoryDAO.java
+│   HistoryDAOSQLite.java
+│   Payment.java
+│   PaymentDAO.java
+│   PaymentDAOSQLite.java
+│   RideshareApp.java
+│   Style.java
+│   TestingHere.java
+│   User.java
+│   UserDAO.java
+│   UserDAOSQLite.java
+│
+├───images
+│       architecture_diagram.png
+│       basicTrip.png
+│       case_diagram.png
+│       class_diagram.png
+│       context_diagram.png
+│       database_ERD.png
+│       database_schema.png
+│       red-sports-car-top-view-hi.png
+│       sequence_diagram_1.png
+│       sequence_diagram_2.png
+│       ui_mockup_book.png
+│       ui_mockup_book_successful.png
+│       ui_mockup_driver_findride.png
+│       ui_mockup_driver_home.png
+│       ui_mockup_home.png
+│       ui_mockup_login.png
+│       ui_mockup_profile.png
+│       ui_mockup_rider_home.png
+│       
+├───lib
+│       json-20231013.jar
+│       sqlite-jdbc-3.50.3.0.jar
+
 ### Installation Steps
 1. **Clone the repository**
    ```bash
