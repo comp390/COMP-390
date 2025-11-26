@@ -453,7 +453,7 @@ public class RideshareApp extends JFrame {
                 if ("driver".equalsIgnoreCase(userRole)) {
                     lastActivity = String.format("$%.2f", last.getFare());
                 } else {
-                    lastActivity = last.getDropoffLoc();
+                    lastActivity = trimLocation(last.getDropoffLoc());
                 }
             }
         } catch (Exception ex) {
@@ -588,8 +588,8 @@ public class RideshareApp extends JFrame {
             empty.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
             historyList.add(empty);
         } else {
-            int count = 0;
-            for (int i = recentTrips.size() - 1; i >= 0 && count < 3; i--) {
+            int max = Math.min(3, recentTrips.size());
+            for (int i = 0; i < max; i++) {
                 History h = recentTrips.get(i);
 
                 JPanel row = new JPanel(new BorderLayout());
@@ -597,7 +597,7 @@ public class RideshareApp extends JFrame {
                 row.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
                 row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-                String routeText = h.getPickupLoc() + " \u2192 " + h.getDropoffLoc();
+                String routeText = trimLocation(h.getPickupLoc()) + " \u2192 " + trimLocation(h.getDropoffLoc());
                 JLabel route = new JLabel(routeText);
                 route.setFont(Style.FONT_REGULAR);
                 route.setForeground(Style.TEXT_DARK);
@@ -610,13 +610,12 @@ public class RideshareApp extends JFrame {
                 row.add(fare, BorderLayout.EAST);
 
                 historyList.add(row);
-                if (count < 2 && i > 0) {
+                if (1 < max -1) {
                     JSeparator sep = new JSeparator();
                     sep.setForeground(Style.BORDER_GRAY);
                     sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
                     historyList.add(sep);
                 }
-                count++;
             }
         }
 
@@ -1173,7 +1172,11 @@ public class RideshareApp extends JFrame {
         JButton backBtn = new JButton("Go Back");
         styleButton(backBtn);
         backBtn.setBackground(Style.TEXT_GRAY);
-        backBtn.addActionListener(e -> c1.show(cards, HOME));
+        backBtn.addActionListener(e -> {
+            JPanel refreshHome = buildHomePage();
+            cards.add(refreshHome, HOME);
+            c1.show(cards, HOME);
+        });
         bottom.add(backBtn);
         p.add(bottom, BorderLayout.SOUTH);
 
@@ -1560,6 +1563,25 @@ public class RideshareApp extends JFrame {
             System.err.println("Error : " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Helper method to trim location from DB so be displayed
+     * @param location the String that holds the pickup/dropoff to be trimmed
+     */
+    private String trimLocation(String location){
+        if (location == null) {
+            return null; // Handle null input
+        }
+        String trimmedLoc;
+        int firstCommaIndex = location.indexOf(',');
+
+        if (firstCommaIndex != -1) {
+            trimmedLoc = location.substring(0, firstCommaIndex);
+        } else {
+            trimmedLoc = location;
+        }
+        return trimmedLoc;
     }
 
     /**
