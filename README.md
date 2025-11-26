@@ -160,6 +160,7 @@ Before running the project, make sure you have:
 
 ### 📁 Project Structure
 
+```
 .
 │   .gitignore
 │   README.md
@@ -210,6 +211,7 @@ Before running the project, make sure you have:
 ├───lib
 │       json-20231013.jar
 │       sqlite-jdbc-3.50.3.0.jar
+```
 
 ### Installation Steps
 1. **Clone the repository**
