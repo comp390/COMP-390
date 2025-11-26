@@ -28,6 +28,7 @@ public class RideshareApp extends JFrame {
     private static final String VIEW_PROF = "viewProf";
     private static final String DRIVER_REQ = "driverRequests";
     private static final String SIGNUP = "signup";
+    private static final String CARS = "cars";
 
 
     private int currentUserID; // for now keep until correct login is implemented
@@ -524,6 +525,19 @@ public class RideshareApp extends JFrame {
         styleButton(profileBtn);
         profileBtn.setBackground(Style.TEXT_DARK);
 
+        // NEW: only for drivers
+        JButton carsBtn = null;
+        if ("driver".equalsIgnoreCase(userRole)) {
+            carsBtn = new JButton("My Cars");
+            styleButton(carsBtn);
+            carsBtn.setBackground(Style.BLUE);
+            carsBtn.addActionListener(e -> {
+                JPanel carsPage = buildCarsPage();
+                cards.add(carsPage, CARS);
+                c1.show(cards, CARS);
+            });
+        }
+
         JButton logoutBtn = new JButton("Log Out");
         styleButton(logoutBtn);
         logoutBtn.setBackground(Style.DARK_GRAY);
@@ -538,9 +552,17 @@ public class RideshareApp extends JFrame {
             c1.show(cards, LOGIN);
         });
 
-        actionPanel.add(mainActionBtn);
-        actionPanel.add(profileBtn);
-        actionPanel.add(logoutBtn);
+        if("driver".equalsIgnoreCase(userRole)) {
+            actionPanel = new JPanel(new GridLayout(1, 4, 15, 0));
+            actionPanel.add(mainActionBtn);
+            actionPanel.add(profileBtn);
+            actionPanel.add(carsBtn);
+            actionPanel.add(logoutBtn);
+        } else {
+            actionPanel.add(mainActionBtn);
+            actionPanel.add(profileBtn);
+            actionPanel.add(logoutBtn);
+        }
         content.add(actionPanel, g);
 
         // history header with view all bttn
@@ -800,6 +822,13 @@ public class RideshareApp extends JFrame {
                 ex.printStackTrace();
             }
         });
+
+        return p;
+    }
+
+    private JPanel buildCarsPage() {
+        JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(Style.APP_BACKGROUD);
 
         return p;
     }
