@@ -1,15 +1,12 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.InsetsUIResource;
-import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Random;
 
@@ -29,10 +26,12 @@ public class RideshareApp extends JFrame {
     private static final String DRIVER_REQ = "driverRequests";
     private static final String SIGNUP = "signup";
     private static final String CARS = "cars";
+    private static final String EDIT_CARS = "editCars";
 
 
     private int currentUserID; // for now keep until correct login is implemented
     private JLabel[] profileViewLabels;
+    private JPanel carListPanel;
 
     // need these in the fiel area so we can load and make data persist
     private JTextField firstNameT;
@@ -70,6 +69,8 @@ public class RideshareApp extends JFrame {
         JPanel viewProf = buildProfileOverviewPage();
         JPanel driverPage = buildDriverRequestsPage();
         JPanel signUpPage = buildSignUpPage();
+        JPanel carsPage = buildCarOverviewPage();
+        //JPanel editCarPage = buildEditCarPage();
 
         // add pages to CardLayout with our keys (see GeeksforGeeks tutorial "1", "2" ... cards)
         cards.add(loginPage, LOGIN);
@@ -80,6 +81,8 @@ public class RideshareApp extends JFrame {
         cards.add(viewProf, VIEW_PROF);
         cards.add(driverPage, DRIVER_REQ);
         cards.add(signUpPage, SIGNUP);
+        cards.add(carsPage, CARS);
+        //cards.add(editCarPage, EDIT_CARS);
 
         setContentPane(cards);
         c1.show(cards, LOGIN);
@@ -532,7 +535,7 @@ public class RideshareApp extends JFrame {
             styleButton(carsBtn);
             carsBtn.setBackground(Style.BLUE);
             carsBtn.addActionListener(e -> {
-                JPanel carsPage = buildCarsPage();
+                JPanel carsPage = buildCarOverviewPage();
                 cards.add(carsPage, CARS);
                 c1.show(cards, CARS);
             });
@@ -826,9 +829,99 @@ public class RideshareApp extends JFrame {
         return p;
     }
 
-    private JPanel buildCarsPage() {
+    /**
+     * Builds the read-only cars page.
+     * @return JPanel car page containing current user car info
+     */
+    private JPanel buildCarOverviewPage() {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(Style.APP_BACKGROUD);
+
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
+
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
+
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.NORTHWEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
+
+        // header
+        g.gridy = 0;
+        g.gridwidth = 2;
+        g.insets = new Insets(0, 0, 25, 0);
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Style.CARD_BACKGROUD);
+
+        JLabel title = new JLabel("My Cars");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+
+        JButton editBtn = new JButton("Add Car");
+        styleButton(editBtn);
+        editBtn.setPreferredSize(new Dimension(120, 35));
+        editBtn.setBackground(Style.TEXT_DARK);
+
+        header.add(title, BorderLayout.WEST);
+        header.add(editBtn, BorderLayout.EAST);
+        card.add(header, g);
+
+        //Car list section
+        g.gridy++;
+        g.insets = new Insets(20, 0, 10, 0);
+        JLabel listHeader = new JLabel("Active Cars");
+        listHeader.setForeground(Style.TEXT_DARK);
+        card.add(listHeader, g);
+
+        // scrollable car list
+        g.gridy++;
+        g.insets = new Insets(0, 0, 0,0);
+        g.fill = GridBagConstraints.BOTH;
+        g.weighty = 1.0;
+
+        carListPanel = new JPanel();
+        carListPanel.setLayout(new BoxLayout(carListPanel, BoxLayout.Y_AXIS));
+        carListPanel.setBackground(Color.WHITE);
+
+        JScrollPane scrollPane = new JScrollPane(carListPanel);
+        scrollPane.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        card.add(scrollPane, g);
+
+        // bttn
+        g.gridy++;
+        g.gridwidth = 2;
+        g.insets = new Insets(30, 0, 0, 0);
+        g.fill = GridBagConstraints.HORIZONTAL;
+
+        JButton backBtn = new JButton("Go Back");
+        styleButton(backBtn);
+        backBtn.setBackground(Style.APP_BACKGROUD);
+        backBtn.setForeground(Style.TEXT_DARK);
+        backBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+        card.add(backBtn, g);
+
+
+
+        content.add(card);
+        p.add(new JScrollPane(content), BorderLayout.CENTER);
+
+        backBtn.addActionListener(e -> c1.show(cards,HOME));
+
+        editBtn.addActionListener(e -> c1.show(cards, EDIT_CARS));
+
+        //cars load here!!
+        loadCurrentUserIntoCarPage();
 
         return p;
     }
@@ -1592,6 +1685,100 @@ public class RideshareApp extends JFrame {
             System.err.println("Error : " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Call this when opening the Car page so field are populated from DB
+     */
+    private void loadCurrentUserIntoCarPage() {
+        try {
+            CarDAOSQLite carDAO = new CarDAOSQLite();
+            List<Car> list = carDAO.findAllByUserId(currentUserID);
+            carListPanel.removeAll();
+
+            if (list.isEmpty()) {
+                // clear fields or leave placeholders as-is
+                JLabel none = new JLabel("No cars found.");
+                none.setForeground(Color.BLACK);
+                none.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+                System.err.println("No cars found for id=" + currentUserID);
+            } else {
+                for (Car c : list) {
+                    JPanel card = buildCarCard(c);
+                    carListPanel.add(card);
+                    carListPanel.add(Box.createVerticalStrut(10));
+                }
+            }
+
+            carListPanel.revalidate();
+            carListPanel.repaint();
+
+        } catch (Exception e) {
+            System.err.println("Error loading profile: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *  Call this when opening the Car page so field are populated from DB
+     */
+    private void loadUserIntoViewCarPage() {
+        try {
+            UserDAOSQLite user = new UserDAOSQLite();
+            Optional<User> opt = user.findById(currentUserID);
+
+            if (!opt.isPresent()) return;
+
+            User curentUser = opt.get();
+
+            profileViewLabels[0].setText(curentUser.getFirstName());
+            profileViewLabels[1].setText(curentUser.getLastName());
+            profileViewLabels[2].setText(curentUser.getEmail());
+            profileViewLabels[3].setText(curentUser.getPhone());
+            profileViewLabels[4].setText(curentUser.getLicense());
+            profileViewLabels[5].setText(curentUser.getDob());
+            profileViewLabels[6].setText(curentUser.getStreetAddress());
+            profileViewLabels[7].setText(curentUser.getCity());
+            profileViewLabels[8].setText(curentUser.getState());
+            profileViewLabels[9].setText(curentUser.getCountry());
+            profileViewLabels[10].setText(curentUser.getZipCode());
+        } catch (Exception e) {
+            System.err.println("Error : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     *  Call this when opening the Car page so field are populated from DB
+     */
+    private JPanel buildCarCard(Car c) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(10, 15, 10, 15)
+        ));
+        card.setBackground(Color.WHITE);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+
+        JPanel left = new JPanel(new GridLayout(5,1));
+        left.setBackground(Color.WHITE);
+        left.add(new JLabel("Year: " + c.getYear()));
+        left.add(new JLabel("Make: " + c.getMake()));
+        left.add(new JLabel("Model: " + c.getModel()));
+        left.add(new JLabel("Value: " + c.getPrice()));
+        left.add(new JLabel("Plate #: " + c.getLicensePlate()));
+
+        JPanel right = new JPanel(new GridLayout(4,1));
+        right.setBackground(Color.WHITE);
+        right.add(new JLabel("Ext. Color: " + c.getExteriorColor()));
+        right.add(new JLabel("Int. Color: " + c.getInteriorColor()));
+        right.add(new JLabel("Int. Materials: " + c.getInteriorMaterials()));
+        right.add(new JLabel("Condition: " + c.getCondition()));
+
+        card.add(left, BorderLayout.CENTER);
+        card.add(right, BorderLayout.EAST);
+
+        return card;
     }
 
     /**

@@ -52,8 +52,8 @@ class CarDAOSQLite implements CarDAO {
     }
 
     /**
-     * Identify single Car from the database using their User_id
-     * @param carID Integer, Takes the ID of the current user (only driver user)
+     * Identify single Car from the database using it's car_ID
+     * @param carID Integer, Takes the ID of the current car
      * @return Car object with the same ID provided
      * @throws Exception
      */
@@ -83,6 +83,44 @@ class CarDAOSQLite implements CarDAO {
                 );
                 d.setCarId(rs.getInt("car_id"));
                 return Optional.of(d);
+            }
+        }
+    }
+
+    /**
+     * Identify all Cars from the database using their User_id
+     * @param userID Integer, Takes the ID of the current user (only driver user)
+     * @return Car objects in List with the same ID provided
+     * @throws Exception
+     */
+    @Override
+    public List<Car> findAllByUserId(int userID) throws Exception {
+        // SQL query statement for easy usage and maintenance
+        String SELECT_CAR_BY_USER_ID_SQL = "SELECT * FROM car WHERE user_id = ? ORDER BY car_id";
+        try(Connection c = DatabaseManager.get();
+            PreparedStatement ps = c.prepareStatement(SELECT_CAR_BY_USER_ID_SQL)) {
+            // Placeholder ? replaced by actual ID
+            ps.setInt(1, userID);
+            try(ResultSet rs = ps.executeQuery()) {
+                // Build a new Car object from database info
+                List<Car> list = new ArrayList<>();
+                while (rs.next()) {
+                    Car d = new Car(
+                            rs.getInt("user_id"),
+                            rs.getString("make"),
+                            rs.getString("model"),
+                            rs.getInt("year"),
+                            rs.getString("ext_color"),
+                            rs.getString("int_color"),
+                            rs.getString("int_materials"),
+                            rs.getDouble("price"),
+                            rs.getString("condition"),
+                            rs.getString("license_plate_no")
+                    );
+                    d.setCarId(rs.getInt("car_id"));
+                    list.add(d);
+                }
+                return list;
             }
         }
     }

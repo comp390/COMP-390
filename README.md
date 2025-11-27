@@ -146,6 +146,7 @@
 ![UI Booking Mockup](images/ui_mockup_book.png)
 ![UI Booking Successful Mockup](images/ui_mockup_book_successful.png)
 ![UI Find Ride Mockup](images/ui_mockup_driver_findride.png)
+![UI Driver Cars Mockup](images/ui_mockup_driver_cars.png)
 
 ---
 
