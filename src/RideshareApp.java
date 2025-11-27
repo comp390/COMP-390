@@ -945,6 +945,117 @@ public class RideshareApp extends JFrame {
         JPanel p = new JPanel(new BorderLayout());
         p.setBackground(Style.APP_BACKGROUD);
 
+        // content wrapper
+        JPanel content = new JPanel(new GridBagLayout());
+        content.setBackground(Style.APP_BACKGROUD);
+        content.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBackground(Style.CARD_BACKGROUD);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_GRAY),
+                BorderFactory.createEmptyBorder(30, 40, 30, 40)
+        ));
+
+        GridBagConstraints g = new GridBagConstraints();
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.anchor = GridBagConstraints.WEST;
+        g.weightx = 1.0;
+        g.gridx = 0;
+        g.gridy = 0;
+
+        // title
+        g.insets = new Insets(0, 0, 20, 0);
+        JLabel title = new JLabel("Edit Car Information");
+        title.setFont(Style.FONT_HEADER);
+        title.setForeground(Style.TEXT_DARK);
+        card.add(title, g);
+
+        g.gridy++;
+
+        // Initialize Fields (Reusing class variables)
+        JTextField carYear = new JTextField(); styleTextField(carYear);
+        JTextField carMake = new JTextField(); styleTextField(carMake);
+        JTextField carModel = new JTextField(); styleTextField(carModel);
+        JTextField carLicensePlate = new JTextField(); styleTextField(carLicensePlate);
+        JTextField carPrice = new JTextField(); styleTextField(carPrice);
+        JTextField carCondition = new JTextField(); styleTextField(carCondition);
+        JTextField carExtColor = new JTextField(); styleTextField(carExtColor);
+        JTextField carIntColor = new JTextField(); styleTextField(carIntColor);
+        JTextField carIntMat = new JTextField(); styleTextField(carIntMat);
+
+        addEditField(card, g, "Year", carYear);
+        addEditField(card, g, "Make", carMake);
+        addEditField(card, g, "Model", carModel);
+        addEditField(card, g, "License Plate", carLicensePlate);
+        addEditField(card, g, "Value", carPrice);
+        addEditField(card, g, "Condition", carCondition);
+        addEditField(card, g, "Exterior Color", carExtColor);
+        addEditField(card, g, "Interior Color", carIntColor);
+        addEditField(card, g, "Interior Materials", carIntMat);
+
+        // actions bttn
+        g.gridy++;
+        g.insets = new Insets(30, 0, 0, 0);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.setBackground(Style.CARD_BACKGROUD);
+
+        JButton cancelBtn = new JButton("Cancel");
+        styleButton(cancelBtn);
+        cancelBtn.setBackground(Style.APP_BACKGROUD);
+        cancelBtn.setForeground(Style.TEXT_DARK);
+        cancelBtn.setBorder(BorderFactory.createLineBorder(Style.BORDER_GRAY));
+
+        JButton saveBtn = new JButton("Save Changes");
+        styleButton(saveBtn);
+        saveBtn.setBackground(Style.BLUE);
+
+        buttons.add(cancelBtn);
+        buttons.add(saveBtn);
+        card.add(buttons, g);
+
+        content.add(card);
+
+        // wrap in ScrollPane because this form is tall!
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setBorder(null);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        p.add(scroll, BorderLayout.CENTER);
+
+        // listeners
+        cancelBtn.addActionListener(e -> {
+            loadCurrentUserIntoCarPage();
+            c1.show(cards, CARS);
+        });
+
+        saveBtn.addActionListener(event -> {
+            CarDAOSQLite carDAO = new CarDAOSQLite();
+            try {
+                Car currentCar = new Car();
+                currentCar.setUserId(currentUserID);
+                currentCar.setYear(Integer.parseInt(carYear.getText().trim()));
+                currentCar.setMake(carMake.getText().trim());
+                currentCar.setModel(carModel.getText().trim());
+                currentCar.setLicensePlate(carLicensePlate.getText().trim());
+                currentCar.setCondition(carCondition.getText().trim());
+                currentCar.setPrice(Double.parseDouble(carPrice.getText().trim()));
+                currentCar.setExteriorColor(carExtColor.getText().trim());
+                currentCar.setInteriorColor(carIntColor.getText().trim());
+                currentCar.setInteriorMaterials(carIntMat.getText().trim());
+
+                int rows = carDAO.insert(currentCar);
+                if (rows > 0){
+                    JOptionPane.showMessageDialog(this, "Car added successfully!");
+                    loadCurrentUserIntoCarPage();
+                    c1.show(cards, CARS);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to save changes.");
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            }
+        });
+
         return p;
     }
 
