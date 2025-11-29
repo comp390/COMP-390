@@ -794,13 +794,23 @@ public class RideshareApp extends JFrame {
             String pickUp = pickUpT.getText().trim();
             String dropOff = dropoffT.getText().trim();
 
-            // basic validation to check against placeholders
+            // basic validation to check against placeholders (first)
             if (pickUp.isEmpty() || pickUp.equals("Enter pickup address...")) {
                 JOptionPane.showMessageDialog(this, "Please enter a pickup location.");
                 return;
             }
             if (dropOff.isEmpty() || dropOff.equals("Enter destination...")) {
                 JOptionPane.showMessageDialog(this, "Please enter a drop-off destination.");
+                return;
+            }
+
+            // check validation from AutoCompleteTextField class
+            if (!pickUpT.hasValidSelection()) {
+                JOptionPane.showMessageDialog(this, "Invalid pickup location.");
+                return;
+            }
+            if (!dropoffT.hasValidSelection()) {
+                JOptionPane.showMessageDialog(this, "Invalid dropoff location.");
                 return;
             }
             try {
