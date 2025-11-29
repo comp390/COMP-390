@@ -966,7 +966,7 @@ public class RideshareApp extends JFrame {
 
         // title
         g.insets = new Insets(0, 0, 20, 0);
-        JLabel title = new JLabel("Edit Car Information");
+        JLabel title = new JLabel("Add New Car");
         title.setFont(Style.FONT_HEADER);
         title.setForeground(Style.TEXT_DARK);
         card.add(title, g);

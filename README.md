@@ -139,14 +139,12 @@
 
 <summary><b>🖼️ UI Mockups / Screenshots</b></summary>
 
-![UI Login Mockup](images/ui_mockup_login.png)
-![UI Homepage Mockup](images/ui_mockup_driver_home.png)
-![UI Homepage Mockup](images/ui_mockup_rider_home.png)
-![UI Profile Mockup](images/ui_mockup_profile.png)
-![UI Booking Mockup](images/ui_mockup_book.png)
-![UI Booking Successful Mockup](images/ui_mockup_book_successful.png)
-![UI Find Ride Mockup](images/ui_mockup_driver_findride.png)
-![UI Driver Cars Mockup](images/ui_mockup_driver_cars.png)
+![UI Login Mockup](images/ui_login.PNG)
+![UI Driver Mockup](images/ui_driver1.PNG)
+![UI Driver Mockup](images/ui_driver2.PNG)
+![UI Rider Mockup](images/ui_rider.PNG)
+![UI Profile Mockup](images/ui_profile.PNG)
+![UI Trips Mockup](images/ui_trips.png)
 
 ---
 
