@@ -2144,7 +2144,7 @@ public class RideshareApp extends JFrame {
     /**
      * Call this when opening the Car page so field are populated from DB
      */
-    private void loadCarIntoEditForm(currentCarID) {
+    private void loadCarIntoEditForm() {
         if (currentCarID <= 0) return;
         try {
             CarDAOSQLite carDAO = new CarDAOSQLite();
