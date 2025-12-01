@@ -7,9 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.time.Year;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 
 /**
  * This is the main app that builds the gui and create instances
@@ -48,11 +47,11 @@ public class RideshareApp extends JFrame {
     private JTextField stateT;
     private JTextField countryT;
     private JTextField zipT;
-    private JComboBox carMakeT;
-    private JTextField carModelT;
-    private JComboBox carYearT;
+    private JComboBox<String> carMakeT;
+    private JComboBox<String> carModelT;
+    private JComboBox<String> carYearT;
     private JTextField carPriceT;
-    private JComboBox carConditionT;
+    private JComboBox<String> carConditionT;
     private JTextField carExtColorT;
     private JTextField carIntColorT;
     private JTextField carIntMatT;
@@ -989,7 +988,6 @@ public class RideshareApp extends JFrame {
         g.gridy++;
 
         // Initialize Fields (Reusing class variables)
-        JTextField carModel = new JTextField(); styleTextField(carModel);
         JTextField carLicensePlate = new JTextField(); styleTextField(carLicensePlate);
         JTextField carPrice = new JTextField(); styleTextField(carPrice);
         JTextField carExtColor = new JTextField(); styleTextField(carExtColor);
@@ -1000,15 +998,53 @@ public class RideshareApp extends JFrame {
         String[] conditions = {"Select Condition:", "fair", "good", "very good", "excellent"};
         JComboBox<String> carCondition = new JComboBox<>(conditions);
 
-        String[] makes = {"Select Make:", "Toyota", "Volkswagen", "Honda", "Ford", "Hyundai",
-                "Nissan", "Suzuki", "Kia", "Chevrolet", "BMW", "Mercedes-Benz", "Audi", "Tesla", "Other"};
+        Map<String, String[]> makeModel = new HashMap<>();
+        makeModel.put("Toyota", new String[]{"4Runner", "Camry", "Corolla", "Corolla Cross", "Corolla Cross Hybrid",
+                "Corolla Hatchback", "Corolla Hybrid", "GR Supra", "Highlander", "Highlander Hybrid", "Prius",
+                "Rav4", "Sequoia", "Tacoma", "Other"});
+        makeModel.put("Volkswagen", new String[]{"Arteon", "Atlas", "Atlas Cross Sport", "Golf", "Golf GTI", "Golf R",
+                "ID. Buzz (electric)", "ID.4 (electric)", "ID.7 (electric)", "Jetta", "Jetta GLI", "Passat",
+                "Polo", "Taos", "Tiguan", "Other"});
+        makeModel.put("Honda", new String[]{"Accord", "Civic", "Civic Type R", "CR-V", "Element", "Fit", "HR-V",
+                "Insight", "Integra", "Odyssey", "Passport", "Pilot", "Prelude", "Ridgeline", "S2000", " Other"});
+        makeModel.put("Ford", new String[]{"Bronco", "Bronco Sport", "Edge", "Escape", "Expedition", "Explorer",
+                "F-150", "F-250", "F-350", "Fusion", "Maverick", "Mustang", "Mustang Mach-E", "Ranger", "Transit", "Other"});
+        makeModel.put("Hyundai", new String[]{"Elantra", "Ioniq 5", "Ioniq 6", "Kona", "Palisade", "Santa Cruz", "Santa Fe",
+                "Santa Fe Sport", "Sonata", "Tucson", "Venue", "Veloster", "Azera", "Accent", "Genesis Coupe", "Nexo", "Other"});
+        makeModel.put("Nissan", new String[]{"370Z", "Altima", "Armada", "Frontier", "GT-R", "Juke", "Kicks", "Leaf", "Maxima",
+                "Murano", "Pathfinder", "Rogue", "Sentra", "Titan", "Versa", "Other"});
+        makeModel.put("Suzuki", new String[]{"Aerio", "Alto", "Baleno", "Celerio", "Ciaz", "Ertiga", "Grand Vitara", "Ignis",
+                "Jimny", "Kizashi", "S-Cross", "Swift", "SX4", "Vitara", "Wagon R", "Other"});
+        makeModel.put("Kia", new String[]{"Carnival", "EV6", "EV9", "Forte", "K5", "Niro", "Optima", "Rio", "Sedona", "Sorento",
+                "Soul", "Sportage", "Stinger", "Telluride", "Seltos", "Other"});
+        makeModel.put("Chevrolet", new String[]{"Blazer", "Bolt EV", "Camaro", "Colorado", "Corvette", "Equinox", "Impala",
+                "Malibu", "Silverado 1500", "Silverado 2500", "Suburban", "Tahoe", "Trailblazer", "Traverse", "Trax", "Other"});
+        makeModel.put("BMW", new String[]{"1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "7 Series", "8 Series",
+                "i3", "i4", "i7", "i8", "M3", "M4", "X3", "X5", "Other"});
+        makeModel.put("Mercedes-Benz", new String[]{"A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLB", "GLC", "GLE", "GLS",
+                "G-Class", "CLA", "CLS", "EQB", "EQE", "EQS", "Other"});
+        makeModel.put("Audi", new String[]{"A3", "A4", "A5", "A6", "A7", "A8", "e-tron", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8",
+                "RS3", "RS6 Avant", "TT", "Other"});
+        makeModel.put("Tesla", new String[]{"Cybertruck", "Model 3", "Model S", "Model X", "Model Y", "Roadster", "Other"});
+        makeModel.put("Other", new String[]{"Other"});
+
+        String[] makes = new String[makeModel.size() +1];
+        makes[0] = "Select Make:";
+        int i = 1;
+        for (String key : makeModel.keySet()){
+            makes[i] = key;
+            i++;
+        }
         JComboBox<String> carMake = new JComboBox<>(makes);
+
+        JComboBox<String> carModel = new JComboBox<>();
+        carModel.setEnabled(false);
 
         int maxYear = Year.now().getValue();
         String[] years = new String[11];
         years[0] = "Select Year:";
-        for (int i = 0; i < 10; i++){
-            years[i+1] = String.valueOf(maxYear - i);
+        for (int j = 0; j < 10; j++){
+            years[j+1] = String.valueOf(maxYear - j);
         }
         JComboBox<String> carYear = new JComboBox<>(years);
 
@@ -1051,7 +1087,19 @@ public class RideshareApp extends JFrame {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         p.add(scroll, BorderLayout.CENTER);
 
+
         // listeners
+        carMake.addActionListener(e -> {
+            String currentMake = (String) carMake.getSelectedItem();
+            String[] models = makeModel.get(currentMake);
+            carModel.removeAllItems();
+            carModel.addItem("Select Model:");
+            for (String model : models) {
+                carModel.addItem(model);
+            }
+            carModel.setEnabled(true);
+        });
+
         cancelBtn.addActionListener(e -> {
             loadCurrentUserIntoCarPage();
             c1.show(cards, CARS);
@@ -1063,7 +1111,7 @@ public class RideshareApp extends JFrame {
                 Car currentCar = new Car();
 
                 List<JTextField> fields = List.of(
-                        carModel, carLicensePlate, carPrice,
+                        carLicensePlate, carPrice,
                         carExtColor, carIntColor, carIntMat
                 );
                 for (JTextField f : fields) {
@@ -1073,7 +1121,7 @@ public class RideshareApp extends JFrame {
                     }
                 }
                 List<JComboBox> dropdownFields = List.of(
-                        carMake, carCondition, carYear
+                        carModel, carMake, carCondition, carYear
                 );
                 for (JComboBox f : dropdownFields) {
                     if (f.getSelectedItem() == null || f.getSelectedIndex() == 0){
@@ -1084,15 +1132,16 @@ public class RideshareApp extends JFrame {
 
                 String priceText = carPrice.getText().trim();
                 String cleanedPriceText = priceText.replaceAll(",", "").replaceAll("\\$", "");
-                if (isInteger(cleanedPriceText) || isDouble(cleanedPriceText)){
+                if (!isInteger(cleanedPriceText) || !isDouble(cleanedPriceText)){
                     JOptionPane.showMessageDialog(this, "Value must be a number.");
+                    return;
                 }
 
 
                 currentCar.setUserId(currentUserID);
                 currentCar.setYear(Integer.parseInt((String) carYear.getSelectedItem()));
                 currentCar.setMake((String) carMake.getSelectedItem());
-                currentCar.setModel(carModel.getText().trim());
+                currentCar.setModel((String) carModel.getSelectedItem());
                 currentCar.setLicensePlate(carLicensePlate.getText().trim());
                 currentCar.setCondition((String) carCondition.getSelectedItem());
                 currentCar.setPrice(Double.parseDouble(cleanedPriceText));
@@ -1153,7 +1202,6 @@ public class RideshareApp extends JFrame {
         g.gridy++;
 
         // Initialize Fields (Reusing class variables)
-        carModelT = new JTextField(); styleTextField(carModelT);
         carLicensePlateT = new JTextField(); styleTextField(carLicensePlateT);
         carPriceT = new JTextField(); styleTextField(carPriceT);
         carExtColorT = new JTextField(); styleTextField(carExtColorT);
@@ -1162,19 +1210,57 @@ public class RideshareApp extends JFrame {
 
         // Dropboxes
         String[] conditions = {"Select Condition:", "fair", "good", "very good", "excellent"};
-        JComboBox<String> carConditionT = new JComboBox<>(conditions);
+        carConditionT = new JComboBox<>(conditions);
 
-        String[] makes = {"Select Make:", "Toyota", "Volkswagen", "Honda", "Ford", "Hyundai",
-                "Nissan", "Suzuki", "Kia", "Chevrolet", "BMW", "Mercedes-Benz", "Audi", "Tesla", "Other"};
-        JComboBox<String> carMakeT = new JComboBox<>(makes);
+        Map<String, String[]> makeModel = new HashMap<>();
+        makeModel.put("Toyota", new String[]{"4Runner", "Camry", "Corolla", "Corolla Cross", "Corolla Cross Hybrid",
+                "Corolla Hatchback", "Corolla Hybrid", "GR Supra", "Highlander", "Highlander Hybrid", "Prius",
+                "Rav4", "Sequoia", "Tacoma", "Other"});
+        makeModel.put("Volkswagen", new String[]{"Arteon", "Atlas", "Atlas Cross Sport", "Golf", "Golf GTI", "Golf R",
+                "ID. Buzz (electric)", "ID.4 (electric)", "ID.7 (electric)", "Jetta", "Jetta GLI", "Passat",
+                "Polo", "Taos", "Tiguan", "Other"});
+        makeModel.put("Honda", new String[]{"Accord", "Civic", "Civic Type R", "CR-V", "Element", "Fit", "HR-V",
+                "Insight", "Integra", "Odyssey", "Passport", "Pilot", "Prelude", "Ridgeline", "S2000", " Other"});
+        makeModel.put("Ford", new String[]{"Bronco", "Bronco Sport", "Edge", "Escape", "Expedition", "Explorer",
+                "F-150", "F-250", "F-350", "Fusion", "Maverick", "Mustang", "Mustang Mach-E", "Ranger", "Transit", "Other"});
+        makeModel.put("Hyundai", new String[]{"Elantra", "Ioniq 5", "Ioniq 6", "Kona", "Palisade", "Santa Cruz", "Santa Fe",
+                "Santa Fe Sport", "Sonata", "Tucson", "Venue", "Veloster", "Azera", "Accent", "Genesis Coupe", "Nexo", "Other"});
+        makeModel.put("Nissan", new String[]{"370Z", "Altima", "Armada", "Frontier", "GT-R", "Juke", "Kicks", "Leaf", "Maxima",
+                "Murano", "Pathfinder", "Rogue", "Sentra", "Titan", "Versa", "Other"});
+        makeModel.put("Suzuki", new String[]{"Aerio", "Alto", "Baleno", "Celerio", "Ciaz", "Ertiga", "Grand Vitara", "Ignis",
+                "Jimny", "Kizashi", "S-Cross", "Swift", "SX4", "Vitara", "Wagon R", "Other"});
+        makeModel.put("Kia", new String[]{"Carnival", "EV6", "EV9", "Forte", "K5", "Niro", "Optima", "Rio", "Sedona", "Sorento",
+                "Soul", "Sportage", "Stinger", "Telluride", "Seltos", "Other"});
+        makeModel.put("Chevrolet", new String[]{"Blazer", "Bolt EV", "Camaro", "Colorado", "Corvette", "Equinox", "Impala",
+                "Malibu", "Silverado 1500", "Silverado 2500", "Suburban", "Tahoe", "Trailblazer", "Traverse", "Trax", "Other"});
+        makeModel.put("BMW", new String[]{"1 Series", "2 Series", "3 Series", "4 Series", "5 Series", "7 Series", "8 Series",
+                "i3", "i4", "i7", "i8", "M3", "M4", "X3", "X5", "Other"});
+        makeModel.put("Mercedes-Benz", new String[]{"A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLB", "GLC", "GLE", "GLS",
+                "G-Class", "CLA", "CLS", "EQB", "EQE", "EQS", "Other"});
+        makeModel.put("Audi", new String[]{"A3", "A4", "A5", "A6", "A7", "A8", "e-tron", "Q3", "Q4 e-tron", "Q5", "Q7", "Q8",
+                "RS3", "RS6 Avant", "TT", "Other"});
+        makeModel.put("Tesla", new String[]{"Cybertruck", "Model 3", "Model S", "Model X", "Model Y", "Roadster", "Other"});
+        makeModel.put("Other", new String[]{"Other"});
+
+        String[] makes = new String[makeModel.size() +1];
+        makes[0] = "Select Make:";
+        int i = 1;
+        for (String key : makeModel.keySet()){
+            makes[i] = key;
+            i++;
+        }
+        carMakeT = new JComboBox<>(makes);
+
+        carModelT = new JComboBox<>();
+        carModelT.setEnabled(false);
 
         int maxYear = Year.now().getValue();
         String[] years = new String[11];
         years[0] = "Select Year:";
-        for (int i = 0; i < 10; i++){
-            years[i+1] = String.valueOf(maxYear - i);
+        for (int j = 0; j < 10; j++){
+            years[j+1] = String.valueOf(maxYear - j);
         }
-        JComboBox<String> carYearT = new JComboBox<>(years);
+        carYearT = new JComboBox<>(years);
 
         addEditField(card, g, "Year", carYearT);
         addEditField(card, g, "Make", carMakeT);
@@ -1215,6 +1301,17 @@ public class RideshareApp extends JFrame {
         p.add(scroll, BorderLayout.CENTER);
 
         // listeners
+        carMakeT.addActionListener(e -> {
+            String currentMake = (String) carMakeT.getSelectedItem();
+            String[] models = makeModel.get(currentMake);
+            carModelT.removeAllItems();
+            carModelT.addItem("Select Model:");
+            for (String model : models) {
+                carModelT.addItem(model);
+            }
+            carModelT.setEnabled(true);
+        });
+
         cancelBtn.addActionListener(e -> {
             loadCurrentUserIntoCarPage();
             c1.show(cards, CARS);
@@ -1226,7 +1323,7 @@ public class RideshareApp extends JFrame {
                 Optional<Car> opt = carDAO.findById(currentCarID);
                 if (opt.isEmpty()) return;
                 List<JTextField> fields = List.of(
-                        carModelT, carLicensePlateT, carPriceT,
+                        carLicensePlateT, carPriceT,
                         carExtColorT, carIntColorT, carIntMatT
                 );
                 for (JTextField f : fields) {
@@ -1236,7 +1333,7 @@ public class RideshareApp extends JFrame {
                     }
                 }
                 List<JComboBox> dropdownFields = List.of(
-                        carMakeT, carConditionT, carYearT
+                        carModelT, carMakeT, carConditionT, carYearT
                 );
                 for (JComboBox f : dropdownFields) {
                     if (f.getSelectedItem() == null || f.getSelectedIndex() == 0){
@@ -1247,14 +1344,15 @@ public class RideshareApp extends JFrame {
 
                 String priceText = carPriceT.getText().trim();
                 String cleanedPriceText = priceText.replaceAll(",", "").replaceAll("\\$", "");
-                if (isInteger(cleanedPriceText) || isDouble(cleanedPriceText)){
+                if (!isInteger(cleanedPriceText) || !isDouble(cleanedPriceText)){
                     JOptionPane.showMessageDialog(this, "Value must be a number.");
+                    return;
                 }
 
                 Car currentCar = opt.get();
                 currentCar.setYear(Integer.parseInt((String) carYearT.getSelectedItem()));
                 currentCar.setMake((String) carMakeT.getSelectedItem());
-                currentCar.setModel(carModelT.getText().trim());
+                currentCar.setModel((String) carModelT.getSelectedItem());
                 currentCar.setLicensePlate(carLicensePlateT.getText().trim());
                 currentCar.setCondition((String) carConditionT.getSelectedItem());
                 currentCar.setPrice(Double.parseDouble(carPriceT.getText().trim()));
@@ -2172,7 +2270,7 @@ public class RideshareApp extends JFrame {
             carLicensePlateT.setForeground(Color.BLACK);
 
             carMakeT.setSelectedItem(c.getMake());
-            carModelT.setText(c.getModel());
+            carModelT.setSelectedItem(c.getModel());
             carYearT.setSelectedItem(Integer.toString(c.getYear()));
             carPriceT.setText(Double.toString(c.getPrice()));
             carConditionT.setSelectedItem(c.getCondition());
