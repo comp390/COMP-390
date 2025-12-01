@@ -6,6 +6,7 @@ import java.awt.event.FocusEvent;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -47,11 +48,11 @@ public class RideshareApp extends JFrame {
     private JTextField stateT;
     private JTextField countryT;
     private JTextField zipT;
-    private JTextField carMakeT;
+    private JComboBox carMakeT;
     private JTextField carModelT;
-    private JTextField carYearT;
+    private JComboBox carYearT;
     private JTextField carPriceT;
-    private JTextField carConditionT;
+    private JComboBox carConditionT;
     private JTextField carExtColorT;
     private JTextField carIntColorT;
     private JTextField carIntMatT;
@@ -984,16 +985,30 @@ public class RideshareApp extends JFrame {
         g.gridy++;
 
         // Initialize Fields (Reusing class variables)
-        JTextField carYear = new JTextField(); styleTextField(carYear);
-        JTextField carMake = new JTextField(); styleTextField(carMake);
         JTextField carModel = new JTextField(); styleTextField(carModel);
         JTextField carLicensePlate = new JTextField(); styleTextField(carLicensePlate);
         JTextField carPrice = new JTextField(); styleTextField(carPrice);
-        JTextField carCondition = new JTextField(); styleTextField(carCondition);
         JTextField carExtColor = new JTextField(); styleTextField(carExtColor);
         JTextField carIntColor = new JTextField(); styleTextField(carIntColor);
         JTextField carIntMat = new JTextField(); styleTextField(carIntMat);
 
+        // Dropboxes
+        String[] conditions = {"Select Condition:", "fair", "good", "very good", "excellent"};
+        JComboBox<String> carCondition = new JComboBox<>(conditions);
+
+        String[] makes = {"Select Make:", "Toyota", "Volkswagen", "Honda", "Ford", "Hyundai",
+                "Nissan", "Suzuki", "Kia", "Chevrolet", "BMW", "Mercedes-Benz", "Audi", "Tesla", "Other"};
+        JComboBox<String> carMake = new JComboBox<>(makes);
+
+        int maxYear = Year.now().getValue();
+        String[] years = new String[11];
+        years[0] = "Select Year:";
+        for (int i = 0; i < 10; i++){
+            years[i+1] = String.valueOf(maxYear - i);
+        }
+        JComboBox<String> carYear = new JComboBox<>(years);
+
+        // add field
         addEditField(card, g, "Year", carYear);
         addEditField(card, g, "Make", carMake);
         addEditField(card, g, "Model", carModel);
@@ -1042,13 +1057,41 @@ public class RideshareApp extends JFrame {
             CarDAOSQLite carDAO = new CarDAOSQLite();
             try {
                 Car currentCar = new Car();
+
+                List<JTextField> fields = List.of(
+                        carModel, carLicensePlate, carPrice,
+                        carExtColor, carIntColor, carIntMat
+                );
+                for (JTextField f : fields) {
+                    if (f.getText().trim().isEmpty()){
+                        JOptionPane.showMessageDialog(this, "All fields are required");
+                        return;
+                    }
+                }
+                List<JComboBox> dropdownFields = List.of(
+                        carMake, carCondition, carYear
+                );
+                for (JComboBox f : dropdownFields) {
+                    if (f.getSelectedItem() == null || f.getSelectedIndex() == 0){
+                        JOptionPane.showMessageDialog(this, "All fields are required");
+                        return;
+                    }
+                }
+
+                String priceText = carPrice.getText().trim();
+                String cleanedPriceText = priceText.replaceAll(",", "").replaceAll("\\$", "");
+                if (isInteger(cleanedPriceText) || isDouble(cleanedPriceText)){
+                    JOptionPane.showMessageDialog(this, "Value must be a number.");
+                }
+
+
                 currentCar.setUserId(currentUserID);
-                currentCar.setYear(Integer.parseInt(carYear.getText().trim()));
-                currentCar.setMake(carMake.getText().trim());
+                currentCar.setYear(Integer.parseInt((String) carYear.getSelectedItem()));
+                currentCar.setMake((String) carMake.getSelectedItem());
                 currentCar.setModel(carModel.getText().trim());
                 currentCar.setLicensePlate(carLicensePlate.getText().trim());
-                currentCar.setCondition(carCondition.getText().trim());
-                currentCar.setPrice(Double.parseDouble(carPrice.getText().trim()));
+                currentCar.setCondition((String) carCondition.getSelectedItem());
+                currentCar.setPrice(Double.parseDouble(cleanedPriceText));
                 currentCar.setExteriorColor(carExtColor.getText().trim());
                 currentCar.setInteriorColor(carIntColor.getText().trim());
                 currentCar.setInteriorMaterials(carIntMat.getText().trim());
@@ -1106,15 +1149,28 @@ public class RideshareApp extends JFrame {
         g.gridy++;
 
         // Initialize Fields (Reusing class variables)
-        carYearT = new JTextField(); styleTextField(carYearT);
-        carMakeT = new JTextField(); styleTextField(carMakeT);
         carModelT = new JTextField(); styleTextField(carModelT);
         carLicensePlateT = new JTextField(); styleTextField(carLicensePlateT);
         carPriceT = new JTextField(); styleTextField(carPriceT);
-        carConditionT = new JTextField(); styleTextField(carConditionT);
         carExtColorT = new JTextField(); styleTextField(carExtColorT);
         carIntColorT = new JTextField(); styleTextField(carIntColorT);
         carIntMatT = new JTextField(); styleTextField(carIntMatT);
+
+        // Dropboxes
+        String[] conditions = {"Select Condition:", "fair", "good", "very good", "excellent"};
+        JComboBox<String> carConditionT = new JComboBox<>(conditions);
+
+        String[] makes = {"Select Make:", "Toyota", "Volkswagen", "Honda", "Ford", "Hyundai",
+                "Nissan", "Suzuki", "Kia", "Chevrolet", "BMW", "Mercedes-Benz", "Audi", "Tesla", "Other"};
+        JComboBox<String> carMakeT = new JComboBox<>(makes);
+
+        int maxYear = Year.now().getValue();
+        String[] years = new String[11];
+        years[0] = "Select Year:";
+        for (int i = 0; i < 10; i++){
+            years[i+1] = String.valueOf(maxYear - i);
+        }
+        JComboBox<String> carYearT = new JComboBox<>(years);
 
         addEditField(card, g, "Year", carYearT);
         addEditField(card, g, "Make", carMakeT);
@@ -1165,13 +1221,38 @@ public class RideshareApp extends JFrame {
             try {
                 Optional<Car> opt = carDAO.findById(currentCarID);
                 if (opt.isEmpty()) return;
+                List<JTextField> fields = List.of(
+                        carModelT, carLicensePlateT, carPriceT,
+                        carExtColorT, carIntColorT, carIntMatT
+                );
+                for (JTextField f : fields) {
+                    if (f.getText().trim().isEmpty()){
+                        JOptionPane.showMessageDialog(this, "All fields are required");
+                        return;
+                    }
+                }
+                List<JComboBox> dropdownFields = List.of(
+                        carMakeT, carConditionT, carYearT
+                );
+                for (JComboBox f : dropdownFields) {
+                    if (f.getSelectedItem() == null || f.getSelectedIndex() == 0){
+                        JOptionPane.showMessageDialog(this, "All fields are required");
+                        return;
+                    }
+                }
+
+                String priceText = carPriceT.getText().trim();
+                String cleanedPriceText = priceText.replaceAll(",", "").replaceAll("\\$", "");
+                if (isInteger(cleanedPriceText) || isDouble(cleanedPriceText)){
+                    JOptionPane.showMessageDialog(this, "Value must be a number.");
+                }
 
                 Car currentCar = opt.get();
-                currentCar.setYear(Integer.parseInt(carYearT.getText().trim()));
-                currentCar.setMake(carMakeT.getText().trim());
+                currentCar.setYear(Integer.parseInt((String) carYearT.getSelectedItem()));
+                currentCar.setMake((String) carMakeT.getSelectedItem());
                 currentCar.setModel(carModelT.getText().trim());
                 currentCar.setLicensePlate(carLicensePlateT.getText().trim());
-                currentCar.setCondition(carConditionT.getText().trim());
+                currentCar.setCondition((String) carConditionT.getSelectedItem());
                 currentCar.setPrice(Double.parseDouble(carPriceT.getText().trim()));
                 currentCar.setExteriorColor(carExtColorT.getText().trim());
                 currentCar.setInteriorColor(carIntColorT.getText().trim());
@@ -1408,7 +1489,7 @@ public class RideshareApp extends JFrame {
     /**
      * Helper to add a label + input pair to the Edit form.
      */
-    private void addEditField(JPanel p, GridBagConstraints g, String label, JTextField field) {
+    private void addEditField(JPanel p, GridBagConstraints g, String label, JComponent field) {
         g.gridy++;
         g.insets = new Insets(15, 0, 5, 0); // Spacing above label
         JLabel l = new JLabel(label);
@@ -2063,7 +2144,7 @@ public class RideshareApp extends JFrame {
     /**
      * Call this when opening the Car page so field are populated from DB
      */
-    private void loadCarIntoEditForm() {
+    private void loadCarIntoEditForm(currentCarID) {
         if (currentCarID <= 0) return;
         try {
             CarDAOSQLite carDAO = new CarDAOSQLite();
@@ -2086,15 +2167,16 @@ public class RideshareApp extends JFrame {
             carIntMatT.setForeground(Color.BLACK);
             carLicensePlateT.setForeground(Color.BLACK);
 
-            carMakeT.setText(c.getMake());
+            carMakeT.setSelectedItem(c.getMake());
             carModelT.setText(c.getModel());
-            carYearT.setText(Integer.toString(c.getYear()));
+            carYearT.setSelectedItem(Integer.toString(c.getYear()));
             carPriceT.setText(Double.toString(c.getPrice()));
-            carConditionT.setText(c.getCondition());
+            carConditionT.setSelectedItem(c.getCondition());
             carExtColorT.setText(c.getExteriorColor());
             carIntColorT.setText(c.getInteriorColor());
             carIntMatT.setText(c.getInteriorMaterials());
             carLicensePlateT.setText(c.getLicensePlate());
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -2294,6 +2376,34 @@ public class RideshareApp extends JFrame {
                 BorderFactory.createLineBorder(Style.BORDER_GRAY, 1),
                 BorderFactory.createEmptyBorder(8,10,8,10)
         ));
+    }
+
+    /** helper method to check text inputs for integer
+     *
+     * @param str, String
+     * @return boolean
+     */
+    public static boolean isInteger(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /** helper method to check text inputs for double
+     *
+     * @param str, String
+     * @return boolean
+     */
+    public static boolean isDouble(String str) {
+        try {
+            Double.parseDouble(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /**
