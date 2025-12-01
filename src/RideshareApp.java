@@ -311,7 +311,7 @@ public class RideshareApp extends JFrame {
         JTextField phoneT = new JTextField(); styleTextField(phoneT);
 
         // Role Selection
-        String[] roles = {"Rider", "Driver"};
+        String[] roles = {"Select Role", "Rider", "Driver"};
         JComboBox<String> roleCombo = new JComboBox<>(roles);
         roleCombo.setBackground(Color.WHITE);
         roleCombo.setFont(Style.FONT_REGULAR);
@@ -377,6 +377,10 @@ public class RideshareApp extends JFrame {
             // Basic Validation
             if (u.isEmpty() || pwd.isEmpty() || l.isEmpty() || em.isEmpty() || ph.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please fill in all required fields.\n(Username, Password, Last Name, Email, Phone)");
+                return;
+            }
+            if (roleCombo.getSelectedItem() == null || roleCombo.getSelectedIndex() == 0){
+                JOptionPane.showMessageDialog(this, "Please select a role.");
                 return;
             }
 
