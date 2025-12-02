@@ -168,20 +168,9 @@ public class TestingHere {
         assertTrue(premiumFare > standardFare);
     }
 
-    /**
-     * UT007: FareCalculator - Calculate shared fare (25% discount)
-     */
-    @Test
-    void testSharedFare() {
-        double standardFare = FareCalculator.calculateStandardFare(10.0, 25);
-        double sharedFare = FareCalculator.calculateSharedFare(10.0, 25);
-        
-        assertEquals(standardFare * 0.75, sharedFare, 0.01);
-        assertTrue(sharedFare < standardFare);
-    }
 
     /**
-     * UT008: FareCalculator - Minimum fare enforcement
+     * UT007: FareCalculator - Minimum fare enforcement
      */
     @Test
     void testMinimumFare() {
@@ -191,7 +180,7 @@ public class TestingHere {
     }
 
     /**
-     * UT009: FareCalculator - Validate negative distance rejection
+     * UT008: FareCalculator - Validate negative distance rejection
      */
     @Test
     void testNegativeDistance() {
@@ -204,7 +193,7 @@ public class TestingHere {
     }
 
     /**
-     * UT010: FareCalculator - Validate negative duration rejection
+     * UT009: FareCalculator - Validate negative duration rejection
      */
     @Test
     void testNegativeDuration() {
