@@ -14,76 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * and funtionality of the application
  */
 public class TestingHere {
-    /**
-     * Test the Car Class by creating and assinging values
-     */
-    @Test
-    void testCar() {
-        System.out.println("Test");
-        Car c = new Car();
-        c.setMake("Tesla");
-        c.setModel("Model S");
-        c.setYear(2020);
-        c.setPrice(100000);
-        assertEquals("Tesla", c.getMake());
-        assertEquals("Model S", c.getModel());
-        assertEquals(2020, c.getYear());
-        assertEquals(100000, c.getPrice());
-        assertNull(c.getInteriorColor());
-
-        System.out.println(c.toString());
-        System.out.println(c.getMake());
-        System.out.println(c.getModel());
-        System.out.println(c.getYear());
-        System.out.println(c.getPrice());
-        System.out.println(c);
-    }
-
-    /**
-     * Testing the User Class by creating and assinging values
-     */
-    @Test
-    void testUser() {
-        User d = new User();
-        d.setFirstName("Jane");
-        d.setLastName("Doe");
-        d.setLicense("S12345");
-        d.setState("MA");
-        assertEquals("Jane", d.getFirstName());
-        assertEquals("Doe", d.getLastName());
-        assertEquals("S12345", d.getLicense());
-        assertEquals("MA", d.getState());
-    }
-
-    /**
-     * Testing the History Class by creating and assinging values
-     */
-    @Test
-    void testHistory() {
-        History h = new History();
-        h.setPickupLoc("BSU");
-        h.setDropoffLoc("home");
-        h.setFare(12.50);
-        assertNotEquals("home", h.getPickupLoc());
-        assertEquals(12.50, h.getFare());
-        assertEquals("BSU", h.getPickupLoc());
-        assertNull(h.getStatus());
-    }
-
-    /**
-     * Testing the Payment Class by creating and assinging values
-     */
-    @Test
-    void testPayment() {
-        Payment p = new Payment();
-        p.setAmountPaid(15.00);
-        p.setTripID(1);
-        p.setPaymentMethod("apple pay");
-        p.setPaymentDate("2025-10-22");
-        System.out.println(p.generateReceipt());
-        assertNotNull(p.generateReceipt());
-    }
-
+  
     /**
      * Testing the connection to the database
      * @throws SQLException
@@ -137,7 +68,7 @@ public class TestingHere {
     void testCarSQL() throws Exception {
         CarDAO dao = new CarDAOSQLite();
         Car c = new Car(1, "Tesla", "Model Y", 2025, "White", "Black", "Leather",
-        60000, "good", "1MA127");
+        60000, "good", "1MA130");
         int car_id = dao.insert(c);
         c.setCarId(car_id);
 
@@ -147,22 +78,143 @@ public class TestingHere {
     }
 
     /**
-     * Test calculation of a trip with correct output
+     * UT001: Car - Create car object and verify attributes
      */
     @Test
-    void testFareCalculator() {
-        System.out.println("\n=== Testing FareCalculator ===");
-    
-        double fare = FareCalculator.calculateStandardFare(10.0, 25);
-    
-        System.out.println("Trip: 10 miles, 25 minutes");
-        System.out.println("Calculated fare: $" + String.format("%.2f", fare));
-    
-        assertEquals(27.25, fare, 0.01, "Fare should be $27.25");
-        assertTrue(fare >= 5.00, "Fare should meet $5 minimum");
+    void testCar() {
+        Car c = new Car();
+        c.setMake("Tesla");
+        c.setModel("Model S");
+        c.setYear(2020);
+        c.setPrice(100000);
+        
+        assertEquals("Tesla", c.getMake());
+        assertEquals("Model S", c.getModel());
+        assertEquals(2020, c.getYear());
+        assertEquals(100000, c.getPrice());
+        assertNull(c.getInteriorColor());
     }
 
+    /**
+     * UT002: User - Create user object and verify attributes
+     */
+    @Test
+    void testUser() {
+        User u = new User();
+        u.setFirstName("Jane");
+        u.setLastName("Doe");
+        u.setLicense("S12345");
+        u.setState("MA");
+        
+        assertEquals("Jane", u.getFirstName());
+        assertEquals("Doe", u.getLastName());
+        assertEquals("S12345", u.getLicense());
+        assertEquals("MA", u.getState());
+    }
 
+    /**
+     * UT003: History - Create trip history and verify attributes
+     */
+    @Test
+    void testHistory() {
+        History h = new History();
+        h.setPickupLoc("BSU");
+        h.setDropoffLoc("Home");
+        h.setFare(12.50);
+        
+        assertEquals("BSU", h.getPickupLoc());
+        assertEquals("Home", h.getDropoffLoc());
+        assertEquals(12.50, h.getFare());
+        assertNotEquals("Home", h.getPickupLoc());
+        assertNull(h.getStatus());
+    }
+
+    /**
+     * UT004: Payment - Create payment and generate receipt
+     */
+    @Test
+    void testPayment() {
+        Payment p = new Payment();
+        p.setAmountPaid(15.00);
+        p.setTripID(1);
+        p.setPaymentMethod("apple pay");
+        p.setPaymentDate("2025-12-01");
+        
+        assertNotNull(p.generateReceipt());
+        assertEquals(15.00, p.getAmountPaid());
+        assertEquals(1, p.getTripID());
+    }
+
+    /**
+     * UT005: FareCalculator - Calculate standard fare
+     */
+    @Test
+    void testStandardFare() {
+        double fare = FareCalculator.calculateStandardFare(10.0, 25);
+        
+        assertEquals(27.25, fare, 0.01);
+        assertTrue(fare >= 5.00);
+    }
+
+    /**
+     * UT006: FareCalculator - Calculate premium fare
+     */
+    @Test
+    void testPremiumFare() {
+        double standardFare = FareCalculator.calculateStandardFare(10.0, 25);
+        double premiumFare = FareCalculator.calculatePremiumFare(10.0, 25);
+        
+        assertEquals(53.50, premiumFare, 0.01);
+        assertTrue(premiumFare > standardFare);
+    }
+
+    /**
+     * UT007: FareCalculator - Calculate shared fare (25% discount)
+     */
+    @Test
+    void testSharedFare() {
+        double standardFare = FareCalculator.calculateStandardFare(10.0, 25);
+        double sharedFare = FareCalculator.calculateSharedFare(10.0, 25);
+        
+        assertEquals(standardFare * 0.75, sharedFare, 0.01);
+        assertTrue(sharedFare < standardFare);
+    }
+
+    /**
+     * UT008: FareCalculator - Minimum fare enforcement
+     */
+    @Test
+    void testMinimumFare() {
+        double fare = FareCalculator.calculateStandardFare(0.5, 2);
+        
+        assertEquals(5.00, fare, 0.01);
+    }
+
+    /**
+     * UT009: FareCalculator - Validate negative distance rejection
+     */
+    @Test
+    void testNegativeDistance() {
+        Exception exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> FareCalculator.calculateStandardFare(-5.0, 10)
+        );
+        
+        assertTrue(exception.getMessage().contains("Distance cannot be negative"));
+    }
+
+    /**
+     * UT010: FareCalculator - Validate negative duration rejection
+     */
+    @Test
+    void testNegativeDuration() {
+        Exception exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> FareCalculator.calculateStandardFare(5.0, -10)
+        );
+        
+        assertTrue(exception.getMessage().contains("Duration cannot be negative"));
+    }
 
     
 }
